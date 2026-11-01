@@ -1,0 +1,2001 @@
+<html lang="en" class="dark"><head><script data-bard-client-injected="true">(function(firebaseConfig, initialAuthToken, appId) {
+        window.__firebase_config = firebaseConfig;
+        window.__initial_auth_token = initialAuthToken;
+        window.__app_id = appId;
+            })("\n{\n  \"apiKey\": \"AIzaSyCqyCcs2R2e7AegGjvFAwG98wlamtbHvZY\",\n  \"authDomain\": \"bard-frontend.firebaseapp.com\",\n  \"projectId\": \"bard-frontend\",\n  \"storageBucket\": \"bard-frontend.firebasestorage.app\",\n  \"messagingSenderId\": \"175205271074\",\n  \"appId\": \"1:175205271074:web:2b7bd4d34d33bf38e6ec7b\"\n}\n","eyJhbGciOiJSUzI1NiIsImtpZCI6IjExNjRiNzdiNDMzZDdhMDAyMWI4NjE4YjhjYTU3ZTMyZGI5MWUxMTMiLCJ0eXAiOiJKV1QifQ.eyJzdWIiOiJmaXJlYmFzZS1hZG1pbnNkay1mYnN2Y0BiYXJkLWZyb250ZW5kLmlhbS5nc2VydmljZWFjY291bnQuY29tIiwiYXVkIjoiaHR0cHM6Ly9pZGVudGl0eXRvb2xraXQuZ29vZ2xlYXBpcy5jb20vZ29vZ2xlLmlkZW50aXR5LmlkZW50aXR5dG9vbGtpdC52MS5JZGVudGl0eVRvb2xraXQiLCJ1aWQiOiIwNDk0MTY3ODExNDY3NjM2MDk2NCIsImlzcyI6ImZpcmViYXNlLWFkbWluc2RrLWZic3ZjQGJhcmQtZnJvbnRlbmQuaWFtLmdzZXJ2aWNlYWNjb3VudC5jb20iLCJjbGFpbXMiOnsiYXBwSWQiOiJjX2Q2MDgxZDQ0NTJjZDRkNjBfZ2lnYV9hcXVhcml1bV90cmFja2VyLmh0bWwtNjg0In0sImV4cCI6MTc5MzUzNTE2MiwiaWF0IjoxNzkzNTMxNTYyLCJhbGciOiJSUzI1NiJ9.N6Zzhsi2qTW4NjH6cn_WXP436y6kmyIG1XZ_wSj-c9RV8CfVDEIPprAyXaLE6zlEoE392zLZDgwf-k-Hna3hqnnMGN6gYotrX4cwygJuZE1OlE9uwpvuMq-hlfLEk9cvKQ_cIj0KIRdHa5rphO8lzdHjTvomYhfB4jrlfm3enkEwbLTmvDl7PFsWcYfG_9APCdYIR5msHOheW_IAzng3t2bM-oduTzwq6HyMtttAYdeV2lmXR7DA2ZXkI-oVgitFQMJw3xLIUgJcgBNZzyM1k2UAiio91Lke-0gnWsfwC7Ixa3xzGRmzkPLIDPBSlWIA-DZbUqaHhpE6lKLyKAZuUA","c_d6081d4452cd4d60_giga_aquarium_tracker.html-684")</script><script data-bard-client-injected="true">
+  document.addEventListener('input', (event) => {
+    if (event.target && (event.target.isContentEditable || event.target.hasAttribute('contenteditable'))) {
+      const clonedDoc = document.cloneNode(true);
+      const injectedScripts = clonedDoc.querySelectorAll('[data-bard-client-injected="true"]');
+      injectedScripts.forEach(el => el.remove());
+      window.parent.postMessage({
+        type: 'inlineEdit',
+        html: '<!DOCTYPE html>\n' + clonedDoc.documentElement.outerHTML
+      }, '*');
+    }
+  });
+</script><script data-bard-client-injected="true">(function(){'use strict';window.addEventListener("message",a=>{a.data&&a.data.type==="SUPPLEMENTAL_DATA_UPDATE"&&window.dispatchEvent(new CustomEvent("supplementaldataupdate",{detail:a.data.data}))});}).call(this);
+</script><script data-bard-client-injected="true">(function() {
+  const SCROLL_KEYS = new Set([
+    'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight',
+    ' ', 'Spacebar', 'PageUp', 'PageDown', 'Home', 'End',
+  ]);
+  const HORIZONTAL_KEYS = new Set(['ArrowLeft', 'ArrowRight']);
+
+  function isTextEntryTarget(target) {
+    if (!target) return false;
+    const tagName = target.tagName;
+    return tagName === 'INPUT' || tagName === 'TEXTAREA' ||
+        tagName === 'SELECT' || target.isContentEditable === true;
+  }
+
+  // An element absorbs the key only if it both overflows on the axis being
+  // scrolled and is configured to scroll on that axis. The cheap dimension
+  // test runs first because getComputedStyle forces a style recalc, and this
+  // runs on every keypress. Each axis is read from its own longhand: the
+  // 'overflow' shorthand serializes as two values when the axes differ, which
+  // is the common 'overflow-x: hidden; overflow-y: auto' pane.
+  function canScroll(node, horizontal) {
+    const overflows = horizontal ? node.scrollWidth > node.clientWidth
+                                 : node.scrollHeight > node.clientHeight;
+    if (!overflows) return false;
+    const style = window.getComputedStyle(node);
+    const overflow = horizontal ? style.overflowX : style.overflowY;
+    return overflow === 'auto' || overflow === 'scroll';
+  }
+
+  // Walks up from the event target so nested scrollers keep their behavior.
+  // <body> is included because pages that pin the root height make it the
+  // scroll container.
+  function hasScrollableAncestor(target, horizontal) {
+    let node = target;
+    while (node && node !== document.documentElement) {
+      if (canScroll(node, horizontal)) return true;
+      node = node.parentElement;
+    }
+    return false;
+  }
+
+  function rootCanScroll(horizontal) {
+    const scroller = document.scrollingElement || document.documentElement;
+    if (!scroller) return false;
+    // Tolerate a pixel of rounding so subpixel layouts do not look scrollable.
+    return horizontal ? scroller.scrollWidth > window.innerWidth + 1
+                      : scroller.scrollHeight > window.innerHeight + 1;
+  }
+
+  window.addEventListener('keydown', function(event) {
+    if (!SCROLL_KEYS.has(event.key)) return;
+    if (event.defaultPrevented) return;
+    // Alt and Meta turn arrows into browser history navigation, and Ctrl is
+    // reserved for shortcuts, so none of them are scroll intent.
+    if (event.altKey || event.metaKey || event.ctrlKey) return;
+
+    const target = event.target;
+    if (isTextEntryTarget(target)) return;
+
+    // Anything that can still absorb the scroll gets to keep it.
+    const horizontal = HORIZONTAL_KEYS.has(event.key);
+    if (rootCanScroll(horizontal)) return;
+    if (hasScrollableAncestor(target, horizontal)) return;
+
+    event.preventDefault();
+  }, {capture: true, passive: false});
+})();</script><script data-bard-client-injected="true">(function() {
+  // Ensure this script is executed only once
+  if (window.firebaseAuthBridgeScriptLoaded) {
+    return;
+  }
+  window.firebaseAuthBridgeScriptLoaded = true;
+
+  let nextTokenPromiseId = 0;
+
+  // Stores { resolve, reject } for ongoing token requests
+  const pendingTokenPromises = {};
+
+  // Listen for messages from the Host Application
+  window.addEventListener('message', function(event) {
+
+    const messageData = event.data;
+
+  if (messageData && messageData.type === 'RESOLVE_NEW_FIREBASE_TOKEN') {
+      const { success, token, error, promiseId } = messageData ?? {};
+      if (pendingTokenPromises[promiseId]) {
+        if (success) {
+          pendingTokenPromises[promiseId].resolve(token);
+        } else {
+          pendingTokenPromises[promiseId].reject(new Error(error || 'Token refresh failed from host.'));
+        }
+        delete pendingTokenPromises[promiseId];
+      }
+    }
+  });
+
+  // Expose a function for the Generated App to request a new Firebase token
+  window.requestNewFirebaseToken = function() {
+    const currentPromiseId = nextTokenPromiseId++;
+    const promise = new Promise((resolve, reject) => {
+      pendingTokenPromises[currentPromiseId] = { resolve, reject };
+    });
+    if (window.parent && window.parent !== window) {
+      window.parent.postMessage({
+        type: 'REQUEST_NEW_FIREBASE_TOKEN',
+        promiseId: currentPromiseId
+      }, '*');
+    } else {
+      pendingTokenPromises[currentPromiseId].reject(new Error('No parent window to request token from.'));
+      delete pendingTokenPromises[currentPromiseId];
+    }
+    return promise;
+  };
+})();</script><script data-bard-client-injected="true">
+let realOriginalGetUserMedia = null;
+if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+  realOriginalGetUserMedia = navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);
+}
+
+(function() {
+  if (navigator.mediaDevices && navigator.mediaDevices.__proto__) {
+    try {
+      Object.defineProperty(navigator.mediaDevices.__proto__, 'getUserMedia', {
+        get: function() {
+          return undefined; // Or throw an error
+        },
+        configurable: false
+      });
+    } catch (error) {
+      console.error("Error defining prototype getter:", error);
+    }
+  }
+})();
+
+(function() {
+  const pendingMediaResolvers = {};
+  let nextMediaPromiseId = 0;
+
+  function requestMediaPermissions(constraints) {
+    const mediaPromiseId = nextMediaPromiseId++;
+    const promise = new Promise((resolve, reject) => {
+      pendingMediaResolvers[mediaPromiseId] = (granted) => {
+        delete pendingMediaResolvers[mediaPromiseId];
+        resolve(granted);
+      };
+    });
+
+    window.parent.postMessage({
+      type: 'requestMediaPermission',
+      constraints: constraints,
+      promiseId: mediaPromiseId,
+    }, '*');
+
+    return promise;
+  }
+
+  let originalGetUserMedia = realOriginalGetUserMedia;
+
+  function interceptGetUserMedia() {
+    if (navigator.mediaDevices) {
+      Object.defineProperty(navigator.mediaDevices, 'getUserMedia', {
+        value: function(constraints) {
+          return requestMediaPermissions(constraints).then((granted) => {
+            if (granted) {
+              if (originalGetUserMedia) {
+                return originalGetUserMedia(constraints);
+              } else {
+                throw new Error("Original getUserMedia not available.");
+              }
+            } else {
+              throw new DOMException('Permission denied', 'NotAllowedError');
+            }
+          });
+        },
+        writable: false,
+        configurable: false
+      });
+    }
+  }
+
+  interceptGetUserMedia();
+
+  const observer = new MutationObserver(function(mutationsList, observer) {
+    for (const mutation of mutationsList) {
+      if (mutation.type === 'reconfigured' && mutation.name === 'getUserMedia' && mutation.object === navigator.mediaDevices) {
+        interceptGetUserMedia();
+      } else if (mutation.type === 'attributes' && mutation.attributeName === 'getUserMedia' && mutation.target === navigator.mediaDevices) {
+        interceptGetUserMedia();
+      } else if (mutation.type === 'childList' && mutation.addedNodes) {
+        mutation.addedNodes.forEach(node => {
+          if (node === navigator.mediaDevices) {
+            interceptGetUserMedia();
+          }
+        });
+      }
+    }
+  });
+
+  function interceptSpeechRecognition() {
+    if (!window.SpeechRecognition && !window.webkitSpeechRecognition) {
+      return;
+    }
+
+    const OriginalSpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+    const SpeechRecognitionWrapper = function(...args) {
+      const recognizer = new OriginalSpeechRecognition(...args);
+      const originalStart = recognizer.start.bind(recognizer);
+
+      recognizer.start = function() {
+        requestMediaPermissions({ audio: true }).then(granted => {
+          if (granted) {
+            originalStart();
+          } else {
+            const errorEvent = new SpeechRecognitionErrorEvent('error');
+            errorEvent.error = 'not-allowed'; // This is the standard error for permission denial.
+            recognizer.dispatchEvent(errorEvent);
+          }
+        });
+      };
+
+      return recognizer;
+    };
+
+    SpeechRecognitionWrapper.prototype = OriginalSpeechRecognition.prototype;
+    SpeechRecognitionWrapper.prototype.constructor = SpeechRecognitionWrapper;
+
+    if (window.SpeechRecognition) {
+      window.SpeechRecognition = SpeechRecognitionWrapper;
+    }
+    if (window.webkitSpeechRecognition) {
+      window.webkitSpeechRecognition = SpeechRecognitionWrapper;
+    }
+  }
+
+  interceptSpeechRecognition();
+
+  window.addEventListener('message', function(event) {
+    if (event.data) {
+      if (event.data.type === 'resolveMediaPermission') {
+        const { promiseId, granted } = event.data;
+        if (pendingMediaResolvers[promiseId]) {
+          pendingMediaResolvers[promiseId](granted);
+        }
+      }
+    }
+  });
+
+})();</script><script ws-interception-config="{&quot;parentOrigin&quot;:&quot;https://gemini.google.com&quot;,&quot;proxiedDomains&quot;:[]}" data-bard-client-injected="true">(function(){'use strict';var u=typeof Object.defineProperties=="function"?Object.defineProperty:function(b,d,e){if(b==Array.prototype||b==Object.prototype)return b;b[d]=e.value;return b};function v(b){b=["object"==typeof globalThis&&globalThis,b,"object"==typeof window&&window,"object"==typeof self&&self,"object"==typeof global&&global];for(var d=0;d<b.length;++d){var e=b[d];if(e&&e.Math==Math)return e}throw Error("Cannot find global object");}var w=v(this);
+function y(b,d){if(d)a:{var e=w;b=b.split(".");for(var h=0;h<b.length-1;h++){var k=b[h];if(!(k in e))break a;e=e[k]}b=b[b.length-1];h=e[b];d=d(h);d!=h&&d!=null&&u(e,b,{configurable:!0,writable:!0,value:d})}}function z(b){function d(h){return b.next(h)}function e(h){return b.throw(h)}return new Promise(function(h,k){function m(n){n.done?h(n.value):Promise.resolve(n.value).then(d,e).then(m,k)}m(b.next())})}y("globalThis",function(b){return b||w});/*
+
+ Copyright The Closure Library Authors.
+ SPDX-License-Identifier: Apache-2.0
+*/
+function A(b,d){function e(){}e.prototype=d.prototype;b.j=d.prototype;b.prototype=new e;b.prototype.constructor=b;b.h=function(h,k,m){for(var n=Array(arguments.length-2),p=2;p<arguments.length;p++)n[p-2]=arguments[p];return d.prototype[k].apply(h,n)}};function B(b,d,e="*"){function h(a){if(typeof a==="string")return F.encode(a).buffer;if(a instanceof ArrayBuffer)return a.slice(0);if(ArrayBuffer.isView(a))return a.buffer.slice(a.byteOffset,a.byteOffset+a.byteLength);throw Error("Invalid data type");}function k(a){a=h(a);var f={type:"send",data:new Uint8Array(a)},g;(g=r)==null||g.postMessage(f,[a])}function m(){if(!r)throw Error("Data port not captured yet.");r.onmessage=a=>{if(a.data.type==="message"){a=new MessageEvent("message",{data:G.decode(a.data.data)});
+let f;(f=c.onmessage)==null||f.call(c,a);c.dispatchEvent(a)}}}function n(){if(!t)throw Error("Control port not captured yet.");t.onmessage=a=>{switch(a.data.type){case "open":l=1;var f=new Event("open"),g;(g=c.onopen)==null||g.call(c,f);c.dispatchEvent(f);q.forEach(H=>{k(H)});q=[];break;case "close":g=a.data;l=3;g=new CloseEvent("close",{code:g.code,reason:g.reason,wasClean:g.wasClean});(f=c.onclose)==null||f.call(c,g);c.dispatchEvent(g);break;case "error":l=3;f=new Event("error");let x;(x=c.onerror)==
+null||x.call(c,f);c.dispatchEvent(f)}}}function p(a){return z(function*(){var f=new MessageChannel;t=f.port1;var g=new MessageChannel;r=g.port1;n();m();window.parent.postMessage({type:"websocket_open",portOrdering:["control","data"],url:b,protocols:a||[],connectionId:I},e,[f.port2,g.port2])}())}var c=Reflect.construct(EventTarget,[],new.target);c.CONNECTING=0;c.OPEN=1;c.CLOSING=2;c.CLOSED=3;c.url=b;c.binaryType="arraybuffer";c.protocol="";c.i="";var l=0,t=null,r=null,q=[],F=new TextEncoder,G=new TextDecoder;
+c.onopen=null;c.onmessage=null;c.onclose=null;c.onerror=null;Object.defineProperty(c,"readyState",{get:()=>l,enumerable:!0,configurable:!0});Object.defineProperty(c,"bufferedAmount",{get:()=>{var a=0;q.forEach(f=>{a+=typeof f==="string"?f.length:f.byteLength});return a},enumerable:!0,configurable:!0});var I=function(){var a;return((a=globalThis.crypto)==null?0:a.randomUUID)?globalThis.crypto.randomUUID():"xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g,f=>{var g=Math.random()*16|0;return(f===
+"x"?g:g&3|8).toString(16)})}();c.send=a=>{if(l===1)a instanceof Blob?a.arrayBuffer().then(f=>{k(f)}):k(a);else if(l===0)if(typeof a==="string")q.push(a);else if(a instanceof ArrayBuffer||ArrayBuffer.isView(a))q.push(h(a));else throw Error("Sending Blob is not supported before the connection is open.");else console.debug("WebSocket send called in CLOSING or CLOSED state; ignored.")};c.close=(a=1E3,f="")=>{if(l!==2&&l!==3){l=2;a={type:"close",code:a,reason:f,wasClean:a===1E3};var g;(g=t)==null||g.postMessage(a)}};
+Promise.resolve().then(()=>p(d));return c}A(B,EventTarget);var C=document.currentScript,D=C==null?void 0:C.getAttribute("ws-interception-config");if(!D)throw Error("WebSocket Interceptor: Missing ws-interception-config attribute in the script tag.");var E=JSON.parse(D);if(!E.parentOrigin||typeof E.parentOrigin!=="string")throw Error("WebSocket Interceptor: Invalid parentOrigin in ws-interception-config");
+(function(b){var d=Object.getOwnPropertyDescriptor(window,"WebSocket");if(!d||d.writable||d.configurable)d=Object.assign(function(e,h){try{let k=(new URL(e)).hostname;if(b.proxiedDomains.some(m=>k===m||k.endsWith(`.${m}`)))return new B(e,h,b.parentOrigin)}catch(k){throw window.parent.postMessage({type:"websocket_blocked",url:e,reason:"blocked_invalid_url"},b.parentOrigin),new DOMException(`WebSocket connection to '${e}' is not allowed in Canvas.`,"SecurityError");}window.parent.postMessage({type:"websocket_blocked",
+url:e,reason:"blocked_domain_not_allowlisted"},b.parentOrigin);throw new DOMException(`WebSocket connection to '${e}' is not allowed in Canvas.`,"SecurityError");},{CONNECTING:0,OPEN:1,CLOSING:2,CLOSED:3}),Object.defineProperty(window,"WebSocket",{value:d,writable:!1,configurable:!1})})({proxiedDomains:E.proxiedDomains||[],parentOrigin:E.parentOrigin});}).call(this);
+</script><script data-bard-client-injected="true">((function(modelInformation) {
+  const originalFetch = window.fetch;
+  // TODO: b/421908508 - Move these out of the script and match all generative AI model calls.
+  let googleLlmBaseApiUrls = [
+    'https://generativelanguage.googleapis.com/v1beta/models/' + modelInformation.textModelName + ':streamGenerateContent',
+    'https://generativelanguage.googleapis.com/v1beta/models/' + modelInformation.textModelName + ':generateContent',
+    'https://generativelanguage.googleapis.com/v1beta/models/' + modelInformation.imageModelName + ':predict',
+    'https://generativelanguage.googleapis.com/v1beta/models/' + modelInformation.imageModelName + ':predictLongRunning',
+    'https://generativelanguage.googleapis.com/v1beta/models/' + modelInformation.imageEditModelName + ':generateContent',
+    'https://generativelanguage.googleapis.com/v1beta/models/' + modelInformation.imageTransformModelName + ':generateContent',
+    'https://generativelanguage.googleapis.com/v1beta/models/' + modelInformation.videoModelName + ':predict',
+    'https://generativelanguage.googleapis.com/v1beta/models/' + modelInformation.videoModelName + ':predictLongRunning',
+    'https://generativelanguage.googleapis.com/v1beta/models/' + modelInformation.ttsModelName + ':generateContent',
+  ];
+  modelInformation.deprecatedTextModelNames.forEach((modelName) => {
+    googleLlmBaseApiUrls.push(
+      'https://generativelanguage.googleapis.com/v1beta/models/' + modelName + ':streamGenerateContent',
+      'https://generativelanguage.googleapis.com/v1beta/models/' + modelName + ':generateContent',
+    );
+  });
+  modelInformation.deprecatedImageModelNames.forEach((modelName) => {
+    googleLlmBaseApiUrls.push(
+      'https://generativelanguage.googleapis.com/v1beta/models/' + modelName + ':predict',
+      'https://generativelanguage.googleapis.com/v1beta/models/' + modelName + ':predictLongRunning',
+      'https://generativelanguage.googleapis.com/v1beta/models/' + modelName + ':generateContent',
+      'https://generativelanguage.googleapis.com/v1beta/models/' + modelName + ':streamGenerateContent',
+    );
+  });
+  modelInformation.deprecatedGenerateImageModelNames.forEach((modelName) => {
+    googleLlmBaseApiUrls.push(
+      'https://generativelanguage.googleapis.com/v1beta/models/' + modelName + ':generateContent',
+      'https://generativelanguage.googleapis.com/v1beta/models/' + modelName + ':streamGenerateContent',
+    );
+  });
+  modelInformation.deprecatedImageTransformModelNames.forEach((modelName) => {
+    googleLlmBaseApiUrls.push(
+      'https://generativelanguage.googleapis.com/v1beta/models/' + modelName + ':generateContent',
+      'https://generativelanguage.googleapis.com/v1beta/models/' + modelName + ':streamGenerateContent',
+    );
+  });
+
+  const pendingFetchResolvers = {};
+  let nextPromiseId = 0;
+
+  function handleStringInput(input, optionsArgument) {
+    const actualUrl = input;
+    const fetchCallArgs = [actualUrl, optionsArgument];
+    const effectiveOptions = optionsArgument || {};
+    const bodyForApiKeyCheck = effectiveOptions.body;
+    const bodyForPostMessage = effectiveOptions.body;
+    return { actualUrl, fetchCallArgs, effectiveOptions, bodyForApiKeyCheck, bodyForPostMessage };
+  }
+
+  function handleRequestInput(input, optionsArgument) {
+    const actualUrl = input.url;
+    const fetchCallArgs = [input, optionsArgument];
+    const effectiveOptions = { method: input.method, headers: new Headers(input.headers) };
+    let bodyForApiKeyCheck;
+    let bodyForPostMessage;
+
+    if (optionsArgument) {
+      if (optionsArgument.method) effectiveOptions.method = optionsArgument.method;
+      if (optionsArgument.headers) effectiveOptions.headers = new Headers(optionsArgument.headers);
+      if ('body' in optionsArgument) {
+        bodyForApiKeyCheck = optionsArgument.body;
+        bodyForPostMessage = optionsArgument.body;
+      } else {
+        bodyForApiKeyCheck = undefined;
+        bodyForPostMessage = input.body;
+      }
+    } else {
+      bodyForApiKeyCheck = undefined;
+      bodyForPostMessage = input.body;
+    }
+    return { actualUrl, fetchCallArgs, effectiveOptions, bodyForApiKeyCheck, bodyForPostMessage };
+  }
+
+  window.fetch = function(input, optionsArgument) {
+    let actualUrl;
+    let fetchCallArgs;
+    let effectiveOptions = {};
+    let bodyForApiKeyCheck;
+    let bodyForPostMessage;
+
+    if (typeof input === 'string') {
+      ({actualUrl, fetchCallArgs, effectiveOptions, bodyForApiKeyCheck, bodyForPostMessage} = handleStringInput(input, optionsArgument));
+    } else if (input instanceof Request) {
+      ({actualUrl, fetchCallArgs, effectiveOptions, bodyForApiKeyCheck, bodyForPostMessage} = handleRequestInput(input, optionsArgument));
+    } else {
+      return originalFetch.apply(window, [input, optionsArgument]);
+    }
+
+    effectiveOptions.method = effectiveOptions.method || 'GET';
+    if (!effectiveOptions.headers) {
+      effectiveOptions.headers = new Headers();
+    }
+
+
+    if (typeof actualUrl === 'string' && googleLlmBaseApiUrls.some((url) => actualUrl.startsWith(url))) {
+      let apiKeyIsNull = true;
+
+      const regex = new RegExp("models/([^:]+)");
+      const modelNameMatch = actualUrl.match(regex);
+      const modelName = modelNameMatch ? modelNameMatch[1] : 'unspecified';
+
+
+      try {
+        const urlObject = new URL(actualUrl);  // Use URL object for robust parsing
+        const apiKeyParam = urlObject.searchParams.get('key');
+        if (apiKeyParam) {
+          apiKeyIsNull = false;
+        }
+      } catch (e) {
+        // Continue checks even if URL parsing fails
+      }
+
+      if (apiKeyIsNull && effectiveOptions.headers) {
+        const h = new Headers(effectiveOptions.headers);
+        const apiKeyHeaderValue = h.get('X-API-Key') || h.get('x-api-key');
+        if (apiKeyHeaderValue) {
+          apiKeyIsNull = false;
+          return originalFetch.apply(window, fetchCallArgs);
+        }
+      }
+
+      if (apiKeyIsNull && effectiveOptions.method && ['POST', 'PUT', 'PATCH'].includes(effectiveOptions.method.toUpperCase()) && typeof bodyForApiKeyCheck === 'string') {
+        try {
+          const bodyData = JSON.parse(bodyForApiKeyCheck);
+          if (bodyData && bodyData.apiKey) {
+            apiKeyIsNull = false;
+            return originalFetch.apply(window, fetchCallArgs);
+          }
+        } catch (e) {
+          // Ignore JSON parsing errors
+        }
+      }
+
+      if(apiKeyIsNull) {
+        const promiseId = nextPromiseId++;
+        const promise = new Promise((resolve) => {
+          pendingFetchResolvers[promiseId] = (resolvedResponse) => {
+            delete pendingFetchResolvers[promiseId];
+            resolve(resolvedResponse);
+          };
+        });
+
+        let serializedBodyForPostMessage;
+        if (typeof bodyForPostMessage === 'string' || bodyForPostMessage == null) {
+            serializedBodyForPostMessage = bodyForPostMessage;
+        } else if (bodyForPostMessage instanceof ReadableStream) {
+            serializedBodyForPostMessage = null;
+        } else {
+            try {
+                serializedBodyForPostMessage = JSON.stringify(bodyForPostMessage);
+            } catch (e) {
+                serializedBodyForPostMessage = null;
+            }
+        }
+
+        const messageOptions = {
+            method: effectiveOptions.method,
+            headers: Object.fromEntries(new Headers(effectiveOptions.headers).entries()),
+            body: serializedBodyForPostMessage
+        };
+
+        window.parent.postMessage({
+          type: 'requestFetch',
+          url: actualUrl,
+          modelName: modelName,
+          options: messageOptions,
+          promiseId: promiseId,
+        }, '*');
+
+        return promise;
+      }
+      return originalFetch.apply(window, fetchCallArgs);
+    }
+    return originalFetch.apply(window, fetchCallArgs);
+  };
+
+  window.addEventListener('message', function(event) {
+    if (event.data && event.data.type === 'resolveFetch') {
+      const { promiseId, response } = event.data;
+      if (pendingFetchResolvers[promiseId]) {
+        try {
+          const reconstructedResponse = new Response(response.body, {
+            status: response.status,
+            statusText: response.statusText,
+            headers: new Headers(response.headers),
+          });
+          pendingFetchResolvers[promiseId](reconstructedResponse);
+        } catch (error) {
+          pendingFetchResolvers[promiseId](new Response(null, { status: 500, statusText: "Interceptor Response Reconstruction Error" }));
+        }
+      }
+    }
+  });
+
+}))({"textModelName":"gemini-3-flash-preview","imageModelName":"imagen-4.0-generate-001","imageEditModelName":"gemini-3.1-flash-image","imageTransformModelName":"gemini-3-pro-image","videoModelName":"veo-2.0-generate-001","ttsModelName":"gemini-2.5-flash-preview-tts","deprecatedTextModelNames":["gemini-2.0-flash","gemini-2.5-flash","gemini-2.5-flash-preview-04-17","gemini-2.5-flash-preview-05-20","gemini-2.5-flash-preview-09-2025"],"deprecatedImageModelNames":["imagen-3.0-generate-001","imagen-3.0-generate-002"],"deprecatedGenerateImageModelNames":["gemini-2.5-flash-image-preview","gemini-2.5-flash-image","gemini-3.1-flash-image-preview"],"deprecatedImageTransformModelNames":["gemini-3-pro-image-preview-11-2025"]})</script><script data-bard-client-injected="true">(function() {
+  function normalizeSlug(str) {
+    try {
+      return str
+        .trim()
+        .toLowerCase()
+        .replace(/[^p{L}p{N}s_-]/gu, '')
+        .replace(/s+/g, '-');
+    } catch (e) {
+      return str
+        .trim()
+        .toLowerCase()
+        .replace(/[^a-z0-9s_-]/g, '')
+        .replace(/s+/g, '-');
+    }
+  }
+
+  function findTargetElement(hash) {
+    if (!hash || hash === '#') {
+      return null;
+    }
+    const rawId = hash.startsWith('#') ? hash.slice(1) : hash;
+    let decodedId = rawId;
+    try {
+      decodedId = decodeURIComponent(rawId);
+    } catch (e) {
+      // Ignore URI malformed errors.
+    }
+
+    // 1. Direct ID match (raw and decoded).
+    let target = document.getElementById(rawId) || document.getElementById(decodedId);
+    if (target) {
+      return target;
+    }
+
+    // 2. Name attribute match (<a name="...">).
+    try {
+      if (typeof CSS !== 'undefined' && CSS.escape) {
+        target =
+          document.querySelector('[name="' + CSS.escape(rawId) + '"]') ||
+          document.querySelector('[name="' + CSS.escape(decodedId) + '"]');
+      } else {
+        const namedElements = document.getElementsByName(rawId);
+        if (namedElements && namedElements.length > 0) {
+          return namedElements[0];
+        }
+      }
+    } catch (e) {
+      // Ignore querySelector syntax errors.
+    }
+    if (target) {
+      return target;
+    }
+
+    // 3. Match heading text by slug (for Markdown TOCs where headings lack explicit IDs).
+    const targetSlug = normalizeSlug(decodedId);
+    if (targetSlug) {
+      for (const heading of document.querySelectorAll('h1, h2, h3, h4, h5, h6')) {
+        if (normalizeSlug(heading.textContent || '') === targetSlug) {
+          return heading;
+        }
+      }
+    }
+
+    return null;
+  }
+
+  document.addEventListener('click', function(event) {
+    const target = event.target;
+    const anchor = target && typeof target.closest === 'function' ? target.closest('a') : null;
+    if (!anchor) {
+      return;
+    }
+
+    const href = anchor.getAttribute('href');
+    if (
+      !href ||
+      href.trim().toLowerCase().startsWith('javascript:') ||
+      anchor.hasAttribute('download')
+    ) {
+      return;
+    }
+
+    // Check if the link is an in-page hash / anchor link.
+    if (href.startsWith('#')) {
+      event.preventDefault();
+      const targetElement = findTargetElement(href);
+      if (targetElement) {
+        targetElement.scrollIntoView({behavior: 'smooth', block: 'start'});
+      }
+      return;
+    }
+
+    // Check if the URL has the same origin/pathname but with a hash.
+    try {
+      const url = new URL(anchor.href, window.location.href);
+      if (
+        url.hash &&
+        url.origin === window.location.origin &&
+        url.pathname === window.location.pathname
+      ) {
+        event.preventDefault();
+        const targetElement = findTargetElement(url.hash);
+        if (targetElement) {
+          targetElement.scrollIntoView({behavior: 'smooth', block: 'start'});
+        }
+        return;
+      }
+    } catch (e) {
+      // Fall through if URL parsing fails.
+    }
+
+    // For all external or full navigation links, prevent iframe-level navigation
+    // (which breaks in AGSA WebView or sandboxed iframes) and ensure they open
+    // safely in a new tab/window.
+    if (anchor.target !== '_blank') {
+      event.preventDefault();
+      window.open(anchor.href, '_blank', 'noopener,noreferrer');
+    }
+  }, {capture: true});
+})();</script><script data-bard-client-injected="true">(function(){'use strict';function a(){window.parent.postMessage({type:"interaction"},"*")}window.addEventListener("click",a,{capture:!0,passive:!0});window.addEventListener("touchstart",a,{capture:!0,passive:!0});window.addEventListener("keydown",a,{capture:!0,passive:!0});}).call(this);
+</script><script data-bard-client-injected="true">(function() {
+  const originalConsoleLog = console.log;
+  const originalConsoleError = console.error;
+
+    /**
+   * Normalizes an error event or a promise rejection reason into a structured error object.
+   * @param {*} errorEventOrReason The error object or reason.
+   * @return {object} Structured error data { message, name, stack }.
+   */
+  function getErrorObject(errorEventOrReason) {
+    if (errorEventOrReason instanceof Error) {
+      return {
+        message: errorEventOrReason.message,
+        name: errorEventOrReason.name,
+        stack: errorEventOrReason.stack,
+      };
+    }
+    // Fallback for non-Error objects.
+    try {
+      return {
+        message: JSON.stringify(errorEventOrReason),
+        name: 'UnknownErrorType',
+        stack: null,
+      };
+    } catch (e) {
+      return {
+        message: String(errorEventOrReason),
+        name: 'UnknownErrorTypeNonStringifiable',
+        stack: null,
+      };
+    }
+  }
+
+  /**
+   * Converts an array of arguments (from log/error) into a single string.
+   * Handles Error objects specially to include their message and stack.
+   * @param {Array<*>} args - Arguments passed to console methods.
+   * @return {string} A string representation of the arguments.
+   */
+  function stringifyArgs(args) {
+    return args
+      .map((arg) => {
+        if (arg instanceof Error) {
+          const {message, stack} = arg;
+          return `Error: ${message}${stack ? ('\nStack: ' + stack) : ''}`;
+        }
+        if (typeof arg === 'object' && arg !== null) {
+          try {
+            return JSON.stringify(arg);
+          } catch (error) {
+            return '[Circular Object]';
+          }
+        } else {
+          return String(arg);
+        }
+      })
+      .join(' ');
+  }
+
+  console.log = function(...args) {
+    const logString = stringifyArgs(args);
+    window.parent.postMessage({ type: 'log', message: logString }, '*');
+    originalConsoleLog.apply(console, args);
+  };
+
+  console.error = function(...args) {
+    let errorData;
+    if (args.length > 0 && args[0] instanceof Error) {
+      const err = args[0];
+      // If the first arg is an Error, capture its details.
+      errorData = {
+        type: 'error',
+        source: 'CONSOLE_ERROR',
+        ...getErrorObject(err),
+        rawArgsString: stringifyArgs(args.slice(1)),
+        timestamp: new Date().toISOString(),
+      };
+    } else {
+      // If not an Error object, treat all args as a general error message.
+      errorData = {
+        type: 'error',
+        source: 'CONSOLE_ERROR',
+        message: stringifyArgs(args),
+        name: 'ConsoleLoggedError',
+        stack: null,
+        timestamp: new Date().toISOString(),
+      };
+    }
+    window.parent.postMessage(errorData, '*');
+    originalConsoleError.apply(console, args);
+  };
+
+  // Listen for global unhandled synchronous errors.
+  window.addEventListener('error', function(event) {
+    const errorDetails = event.error ? getErrorObject(event.error) : {
+      message: event.message,
+      name: 'GlobalError',
+      stack: null,
+      filename: event.filename,
+      lineno: event.lineno,
+      colno: event.colno,
+    };
+
+    window.parent.postMessage({
+      type: 'error',
+      source: 'global',
+      ...errorDetails,
+      message: errorDetails.message || event.message,
+      timestamp: new Date().toISOString(),
+    }, '*');
+  });
+
+  // Listen for unhandled promise rejections (asynchronous errors).
+  window.addEventListener('unhandledrejection', function(event) {
+    const errorDetails = getErrorObject(event.reason);
+
+    window.parent.postMessage({
+      type: 'error',
+      source: 'unhandledrejection',
+      ...errorDetails,
+      message: errorDetails.message || 'Unhandled Promise Rejection',
+      timestamp: new Date().toISOString(),
+    }, '*');
+  });
+
+})();</script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aquarium Parameter Tracker</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js" crossorigin="anonymous"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            500: '#0ea5e9',
+                            600: '#0284c7',
+                            800: '#075985',
+                            900: '#0c4a6e',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+<style>*, ::before, ::after{--tw-border-spacing-x:0;--tw-border-spacing-y:0;--tw-translate-x:0;--tw-translate-y:0;--tw-rotate:0;--tw-skew-x:0;--tw-skew-y:0;--tw-scale-x:1;--tw-scale-y:1;--tw-pan-x: ;--tw-pan-y: ;--tw-pinch-zoom: ;--tw-scroll-snap-strictness:proximity;--tw-gradient-from-position: ;--tw-gradient-via-position: ;--tw-gradient-to-position: ;--tw-ordinal: ;--tw-slashed-zero: ;--tw-numeric-figure: ;--tw-numeric-spacing: ;--tw-numeric-fraction: ;--tw-ring-inset: ;--tw-ring-offset-width:0px;--tw-ring-offset-color:#fff;--tw-ring-color:rgb(59 130 246 / 0.5);--tw-ring-offset-shadow:0 0 #0000;--tw-ring-shadow:0 0 #0000;--tw-shadow:0 0 #0000;--tw-shadow-colored:0 0 #0000;--tw-blur: ;--tw-brightness: ;--tw-contrast: ;--tw-grayscale: ;--tw-hue-rotate: ;--tw-invert: ;--tw-saturate: ;--tw-sepia: ;--tw-drop-shadow: ;--tw-backdrop-blur: ;--tw-backdrop-brightness: ;--tw-backdrop-contrast: ;--tw-backdrop-grayscale: ;--tw-backdrop-hue-rotate: ;--tw-backdrop-invert: ;--tw-backdrop-opacity: ;--tw-backdrop-saturate: ;--tw-backdrop-sepia: ;--tw-contain-size: ;--tw-contain-layout: ;--tw-contain-paint: ;--tw-contain-style: }::backdrop{--tw-border-spacing-x:0;--tw-border-spacing-y:0;--tw-translate-x:0;--tw-translate-y:0;--tw-rotate:0;--tw-skew-x:0;--tw-skew-y:0;--tw-scale-x:1;--tw-scale-y:1;--tw-pan-x: ;--tw-pan-y: ;--tw-pinch-zoom: ;--tw-scroll-snap-strictness:proximity;--tw-gradient-from-position: ;--tw-gradient-via-position: ;--tw-gradient-to-position: ;--tw-ordinal: ;--tw-slashed-zero: ;--tw-numeric-figure: ;--tw-numeric-spacing: ;--tw-numeric-fraction: ;--tw-ring-inset: ;--tw-ring-offset-width:0px;--tw-ring-offset-color:#fff;--tw-ring-color:rgb(59 130 246 / 0.5);--tw-ring-offset-shadow:0 0 #0000;--tw-ring-shadow:0 0 #0000;--tw-shadow:0 0 #0000;--tw-shadow-colored:0 0 #0000;--tw-blur: ;--tw-brightness: ;--tw-contrast: ;--tw-grayscale: ;--tw-hue-rotate: ;--tw-invert: ;--tw-saturate: ;--tw-sepia: ;--tw-drop-shadow: ;--tw-backdrop-blur: ;--tw-backdrop-brightness: ;--tw-backdrop-contrast: ;--tw-backdrop-grayscale: ;--tw-backdrop-hue-rotate: ;--tw-backdrop-invert: ;--tw-backdrop-opacity: ;--tw-backdrop-saturate: ;--tw-backdrop-sepia: ;--tw-contain-size: ;--tw-contain-layout: ;--tw-contain-paint: ;--tw-contain-style: }/* ! tailwindcss v3.4.17 | MIT License | https://tailwindcss.com */*,::after,::before{box-sizing:border-box;border-width:0;border-style:solid;border-color:#e5e7eb}::after,::before{--tw-content:''}:host,html{line-height:1.5;-webkit-text-size-adjust:100%;-moz-tab-size:4;tab-size:4;font-family:ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";font-feature-settings:normal;font-variation-settings:normal;-webkit-tap-highlight-color:transparent}body{margin:0;line-height:inherit}hr{height:0;color:inherit;border-top-width:1px}abbr:where([title]){-webkit-text-decoration:underline dotted;text-decoration:underline dotted}h1,h2,h3,h4,h5,h6{font-size:inherit;font-weight:inherit}a{color:inherit;text-decoration:inherit}b,strong{font-weight:bolder}code,kbd,pre,samp{font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;font-feature-settings:normal;font-variation-settings:normal;font-size:1em}small{font-size:80%}sub,sup{font-size:75%;line-height:0;position:relative;vertical-align:baseline}sub{bottom:-.25em}sup{top:-.5em}table{text-indent:0;border-color:inherit;border-collapse:collapse}button,input,optgroup,select,textarea{font-family:inherit;font-feature-settings:inherit;font-variation-settings:inherit;font-size:100%;font-weight:inherit;line-height:inherit;letter-spacing:inherit;color:inherit;margin:0;padding:0}button,select{text-transform:none}button,input:where([type=button]),input:where([type=reset]),input:where([type=submit]){-webkit-appearance:button;background-color:transparent;background-image:none}:-moz-focusring{outline:auto}:-moz-ui-invalid{box-shadow:none}progress{vertical-align:baseline}::-webkit-inner-spin-button,::-webkit-outer-spin-button{height:auto}[type=search]{-webkit-appearance:textfield;outline-offset:-2px}::-webkit-search-decoration{-webkit-appearance:none}::-webkit-file-upload-button{-webkit-appearance:button;font:inherit}summary{display:list-item}blockquote,dd,dl,figure,h1,h2,h3,h4,h5,h6,hr,p,pre{margin:0}fieldset{margin:0;padding:0}legend{padding:0}menu,ol,ul{list-style:none;margin:0;padding:0}dialog{padding:0}textarea{resize:vertical}input::placeholder,textarea::placeholder{opacity:1;color:#9ca3af}[role=button],button{cursor:pointer}:disabled{cursor:default}audio,canvas,embed,iframe,img,object,svg,video{display:block;vertical-align:middle}img,video{max-width:100%;height:auto}[hidden]:where(:not([hidden=until-found])){display:none}.fixed{position:fixed}.relative{position:relative}.sticky{position:sticky}.inset-0{inset:0px}.top-0{top:0px}.z-30{z-index:30}.z-50{z-index:50}.mx-auto{margin-left:auto;margin-right:auto}.mb-1{margin-bottom:0.25rem}.ml-1{margin-left:0.25rem}.mr-1\.5{margin-right:0.375rem}.mt-1{margin-top:0.25rem}.mt-2{margin-top:0.5rem}.block{display:block}.inline-block{display:inline-block}.flex{display:flex}.inline-flex{display:inline-flex}.grid{display:grid}.hidden{display:none}.h-16{height:4rem}.h-2\.5{height:0.625rem}.h-64{height:16rem}.min-h-screen{min-height:100vh}.w-2\.5{width:0.625rem}.w-full{width:100%}.max-w-7xl{max-width:80rem}.max-w-lg{max-width:32rem}.max-w-md{max-width:28rem}.flex-1{flex:1 1 0%}.cursor-pointer{cursor:pointer}.grid-cols-1{grid-template-columns:repeat(1, minmax(0, 1fr))}.grid-cols-2{grid-template-columns:repeat(2, minmax(0, 1fr))}.flex-col{flex-direction:column}.flex-wrap{flex-wrap:wrap}.items-center{align-items:center}.justify-end{justify-content:flex-end}.justify-center{justify-content:center}.justify-between{justify-content:space-between}.gap-2{gap:0.5rem}.gap-2\.5{gap:0.625rem}.gap-3{gap:0.75rem}.gap-4{gap:1rem}.space-x-1\.5 > :not([hidden]) ~ :not([hidden]){--tw-space-x-reverse:0;margin-right:calc(0.375rem * var(--tw-space-x-reverse));margin-left:calc(0.375rem * calc(1 - var(--tw-space-x-reverse)))}.space-x-2 > :not([hidden]) ~ :not([hidden]){--tw-space-x-reverse:0;margin-right:calc(0.5rem * var(--tw-space-x-reverse));margin-left:calc(0.5rem * calc(1 - var(--tw-space-x-reverse)))}.space-x-3 > :not([hidden]) ~ :not([hidden]){--tw-space-x-reverse:0;margin-right:calc(0.75rem * var(--tw-space-x-reverse));margin-left:calc(0.75rem * calc(1 - var(--tw-space-x-reverse)))}.space-y-3 > :not([hidden]) ~ :not([hidden]){--tw-space-y-reverse:0;margin-top:calc(0.75rem * calc(1 - var(--tw-space-y-reverse)));margin-bottom:calc(0.75rem * var(--tw-space-y-reverse))}.space-y-4 > :not([hidden]) ~ :not([hidden]){--tw-space-y-reverse:0;margin-top:calc(1rem * calc(1 - var(--tw-space-y-reverse)));margin-bottom:calc(1rem * var(--tw-space-y-reverse))}.space-y-6 > :not([hidden]) ~ :not([hidden]){--tw-space-y-reverse:0;margin-top:calc(1.5rem * calc(1 - var(--tw-space-y-reverse)));margin-bottom:calc(1.5rem * var(--tw-space-y-reverse))}.divide-y > :not([hidden]) ~ :not([hidden]){--tw-divide-y-reverse:0;border-top-width:calc(1px * calc(1 - var(--tw-divide-y-reverse)));border-bottom-width:calc(1px * var(--tw-divide-y-reverse))}.divide-slate-800\/60 > :not([hidden]) ~ :not([hidden]){border-color:rgb(30 41 59 / 0.6)}.overflow-hidden{overflow:hidden}.overflow-x-auto{overflow-x:auto}.rounded-2xl{border-radius:1rem}.rounded-full{border-radius:9999px}.rounded-lg{border-radius:0.5rem}.rounded-xl{border-radius:0.75rem}.border{border-width:1px}.border-b{border-bottom-width:1px}.border-cyan-500\/20{border-color:rgb(6 182 212 / 0.2)}.border-slate-700{--tw-border-opacity:1;border-color:rgb(51 65 85 / var(--tw-border-opacity, 1))}.border-slate-800{--tw-border-opacity:1;border-color:rgb(30 41 59 / var(--tw-border-opacity, 1))}.border-slate-800\/40{border-color:rgb(30 41 59 / 0.4)}.bg-amber-400{--tw-bg-opacity:1;background-color:rgb(251 191 36 / var(--tw-bg-opacity, 1))}.bg-cyan-500\/10{background-color:rgb(6 182 212 / 0.1)}.bg-cyan-600{--tw-bg-opacity:1;background-color:rgb(8 145 178 / var(--tw-bg-opacity, 1))}.bg-emerald-400{--tw-bg-opacity:1;background-color:rgb(52 211 153 / var(--tw-bg-opacity, 1))}.bg-purple-400{--tw-bg-opacity:1;background-color:rgb(192 132 252 / var(--tw-bg-opacity, 1))}.bg-sky-400{--tw-bg-opacity:1;background-color:rgb(56 189 248 / var(--tw-bg-opacity, 1))}.bg-slate-800{--tw-bg-opacity:1;background-color:rgb(30 41 59 / var(--tw-bg-opacity, 1))}.bg-slate-900{--tw-bg-opacity:1;background-color:rgb(15 23 42 / var(--tw-bg-opacity, 1))}.bg-slate-900\/80{background-color:rgb(15 23 42 / 0.8)}.bg-slate-950{--tw-bg-opacity:1;background-color:rgb(2 6 23 / var(--tw-bg-opacity, 1))}.bg-slate-950\/60{background-color:rgb(2 6 23 / 0.6)}.bg-slate-950\/80{background-color:rgb(2 6 23 / 0.8)}.p-2{padding:0.5rem}.p-3{padding:0.75rem}.p-4{padding:1rem}.p-5{padding:1.25rem}.p-6{padding:1.5rem}.p-1\.5{padding:0.375rem}.px-3{padding-left:0.75rem;padding-right:0.75rem}.px-4{padding-left:1rem;padding-right:1rem}.px-6{padding-left:1.5rem;padding-right:1.5rem}.py-1\.5{padding-top:0.375rem;padding-bottom:0.375rem}.py-2{padding-top:0.5rem;padding-bottom:0.5rem}.py-2\.5{padding-top:0.625rem;padding-bottom:0.625rem}.py-3\.5{padding-top:0.875rem;padding-bottom:0.875rem}.py-4{padding-top:1rem;padding-bottom:1rem}.py-6{padding-top:1.5rem;padding-bottom:1.5rem}.py-3{padding-top:0.75rem;padding-bottom:0.75rem}.pb-3{padding-bottom:0.75rem}.pt-1{padding-top:0.25rem}.pt-2{padding-top:0.5rem}.text-left{text-align:left}.text-right{text-align:right}.font-mono{font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace}.text-2xl{font-size:1.5rem;line-height:2rem}.text-\[11px\]{font-size:11px}.text-lg{font-size:1.125rem;line-height:1.75rem}.text-sm{font-size:0.875rem;line-height:1.25rem}.text-xl{font-size:1.25rem;line-height:1.75rem}.text-xs{font-size:0.75rem;line-height:1rem}.font-bold{font-weight:700}.font-medium{font-weight:500}.font-semibold{font-weight:600}.uppercase{text-transform:uppercase}.italic{font-style:italic}.leading-none{line-height:1}.text-amber-400{--tw-text-opacity:1;color:rgb(251 191 36 / var(--tw-text-opacity, 1))}.text-cyan-400{--tw-text-opacity:1;color:rgb(34 211 238 / var(--tw-text-opacity, 1))}.text-emerald-400{--tw-text-opacity:1;color:rgb(52 211 153 / var(--tw-text-opacity, 1))}.text-purple-400{--tw-text-opacity:1;color:rgb(192 132 252 / var(--tw-text-opacity, 1))}.text-slate-100{--tw-text-opacity:1;color:rgb(241 245 249 / var(--tw-text-opacity, 1))}.text-slate-200{--tw-text-opacity:1;color:rgb(226 232 240 / var(--tw-text-opacity, 1))}.text-slate-300{--tw-text-opacity:1;color:rgb(203 213 225 / var(--tw-text-opacity, 1))}.text-slate-400{--tw-text-opacity:1;color:rgb(148 163 184 / var(--tw-text-opacity, 1))}.text-slate-500{--tw-text-opacity:1;color:rgb(100 116 139 / var(--tw-text-opacity, 1))}.text-white{--tw-text-opacity:1;color:rgb(255 255 255 / var(--tw-text-opacity, 1))}.antialiased{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}.shadow{--tw-shadow:0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);--tw-shadow-colored:0 1px 3px 0 var(--tw-shadow-color), 0 1px 2px -1px var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow)}.shadow-2xl{--tw-shadow:0 25px 50px -12px rgb(0 0 0 / 0.25);--tw-shadow-colored:0 25px 50px -12px var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow)}.shadow-lg{--tw-shadow:0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);--tw-shadow-colored:0 10px 15px -3px var(--tw-shadow-color), 0 4px 6px -4px var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow)}.shadow-sm{--tw-shadow:0 1px 2px 0 rgb(0 0 0 / 0.05);--tw-shadow-colored:0 1px 2px 0 var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow)}.shadow-cyan-600\/20{--tw-shadow-color:rgb(8 145 178 / 0.2);--tw-shadow:var(--tw-shadow-colored)}.backdrop-blur{--tw-backdrop-blur:blur(8px);-webkit-backdrop-filter:var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia);backdrop-filter:var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia)}.backdrop-blur-sm{--tw-backdrop-blur:blur(4px);-webkit-backdrop-filter:var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia);backdrop-filter:var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia)}.transition{transition-property:color, background-color, border-color, fill, stroke, opacity, box-shadow, transform, filter, -webkit-text-decoration-color, -webkit-backdrop-filter;transition-property:color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter;transition-property:color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter, -webkit-text-decoration-color, -webkit-backdrop-filter;transition-timing-function:cubic-bezier(0.4, 0, 0.2, 1);transition-duration:150ms}.hover\:border-slate-700:hover{--tw-border-opacity:1;border-color:rgb(51 65 85 / var(--tw-border-opacity, 1))}.hover\:bg-cyan-500:hover{--tw-bg-opacity:1;background-color:rgb(6 182 212 / var(--tw-bg-opacity, 1))}.hover\:bg-slate-700:hover{--tw-bg-opacity:1;background-color:rgb(51 65 85 / var(--tw-bg-opacity, 1))}.hover\:bg-slate-800:hover{--tw-bg-opacity:1;background-color:rgb(30 41 59 / var(--tw-bg-opacity, 1))}.hover\:bg-slate-800\/40:hover{background-color:rgb(30 41 59 / 0.4)}.hover\:text-slate-200:hover{--tw-text-opacity:1;color:rgb(226 232 240 / var(--tw-text-opacity, 1))}.hover\:text-cyan-400:hover{--tw-text-opacity:1;color:rgb(34 211 238 / var(--tw-text-opacity, 1))}.hover\:text-rose-400:hover{--tw-text-opacity:1;color:rgb(251 113 133 / var(--tw-text-opacity, 1))}.focus\:border-cyan-500:focus{--tw-border-opacity:1;border-color:rgb(6 182 212 / var(--tw-border-opacity, 1))}.focus\:outline-none:focus{outline:2px solid transparent;outline-offset:2px}@media (min-width: 640px){.sm\:inline{display:inline}.sm\:h-80{height:20rem}.sm\:px-6{padding-left:1.5rem;padding-right:1.5rem}.sm\:text-sm{font-size:0.875rem;line-height:1.25rem}}@media (min-width: 768px){.md\:grid-cols-4{grid-template-columns:repeat(4, minmax(0, 1fr))}}@media (min-width: 1024px){.lg\:px-8{padding-left:2rem;padding-right:2rem}}</style></head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col antialiased">
+
+    <!-- Top Navigation Header -->
+    <header class="border-b border-slate-800 bg-slate-900/80 backdrop-blur sticky top-0 z-30">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="p-2 bg-cyan-500/10 text-cyan-400 rounded-xl border border-cyan-500/20">
+                    <i class="fa-solid fa-fish-fins text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-lg text-slate-100 leading-none">Aquarium Water Log</h1>
+                    <p class="text-xs text-slate-400 mt-1">Water Quality Monitoring System</p>
+                </div>
+            </div>
+            
+            <div class="flex items-center space-x-2">
+                <button onclick="window.exportCSV()" class="px-3 py-2 text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg transition border border-slate-700 flex items-center space-x-1.5" title="Export CSV Spreadsheet">
+                    <i class="fa-solid fa-file-csv text-emerald-400"></i>
+                    <span class="hidden sm:inline">Export CSV</span>
+                </button>
+                <button onclick="window.exportJSONBackup()" class="px-3 py-2 text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg transition border border-slate-700 flex items-center space-x-1.5" title="Export JSON Backup">
+                    <i class="fa-solid fa-database text-cyan-400"></i>
+                    <span class="hidden sm:inline">Export JSON</span>
+                </button>
+                <button onclick="window.openSyncModal()" class="px-3 py-2 text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg transition border border-slate-700 flex items-center space-x-1.5">
+                    <i class="fa-solid fa-rotate text-cyan-400"></i>
+                    <span class="hidden sm:inline">Cloud Sync</span>
+                </button>
+                <button onclick="window.openDriveModal()" class="px-3 py-2 text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg transition border border-slate-700 flex items-center space-x-1.5">
+                    <i class="fa-brands fa-google-drive text-emerald-400"></i>
+                    <span class="hidden sm:inline">Drive / Backup</span>
+                </button>
+                <button onclick="document.getElementById('fileImporter').click()" class="px-3 py-2 text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg transition border border-slate-700 flex items-center space-x-1.5">
+                    <i class="fa-solid fa-file-import text-amber-400"></i>
+                    <span class="hidden sm:inline">Import</span>
+                </button>
+                <button onclick="window.openEntryModal()" class="px-3 py-2 text-xs font-medium bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg transition flex items-center space-x-1.5 shadow-lg shadow-cyan-600/20">
+                    <i class="fa-solid fa-plus"></i>
+                    <span>New Entry</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Hidden File Input for CSV / JSON import -->
+    <input type="file" id="fileImporter" accept=".csv, .json" class="hidden" onchange="window.handleFileUpload(event)">
+
+    <!-- Main Application Container -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+
+        <!-- Stat Summary Cards -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-sm">
+                <div class="text-xs font-medium text-slate-400 flex justify-between items-center">
+                    <span>Phosphat (PO4)</span>
+                    <span class="text-xs text-cyan-400 font-mono">ppm</span>
+                </div>
+                <div id="cardPo4Val" class="text-2xl font-bold text-slate-100 mt-2 font-mono">&gt;0.9</div>
+                <div class="text-[11px] text-slate-500 mt-1">Target: &lt; 0.1 ppm</div>
+            </div>
+
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-sm">
+                <div class="text-xs font-medium text-slate-400 flex justify-between items-center">
+                    <span>Nitrat (NO3)</span>
+                    <span class="text-xs text-emerald-400 font-mono">ppm</span>
+                </div>
+                <div id="cardNo3Val" class="text-2xl font-bold text-slate-100 mt-2 font-mono">13.4</div>
+                <div class="text-[11px] text-slate-500 mt-1">Target: 5 - 15 ppm</div>
+            </div>
+
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-sm">
+                <div class="text-xs font-medium text-slate-400 flex justify-between items-center">
+                    <span>Karbonathärte (KH)</span>
+                    <span class="text-xs text-amber-400 font-mono">°dH</span>
+                </div>
+                <div id="cardKhVal" class="text-2xl font-bold text-slate-100 mt-2 font-mono">7.1</div>
+                <div class="text-[11px] text-slate-500 mt-1">Target: 4 - 8 °dH</div>
+            </div>
+
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-sm">
+                <div class="text-xs font-medium text-slate-400 flex justify-between items-center">
+                    <span>Leitwert</span>
+                    <span class="text-xs text-purple-400 font-mono">µS/cm</span>
+                </div>
+                <div id="cardLeitwertVal" class="text-2xl font-bold text-slate-100 mt-2 font-mono">350</div>
+                <div class="text-[11px] text-slate-500 mt-1">Target: 300 - 500 µS</div>
+            </div>
+        </div>
+
+        <!-- Parameter Chart Panel -->
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-sm space-y-4">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h2 class="font-bold text-slate-200">Parameter Trends</h2>
+                    <p class="text-xs text-slate-400">Historical comparison over time</p>
+                </div>
+                <div class="text-xs text-slate-400 flex items-center space-x-3">
+                    <span class="inline-flex items-center"><span class="w-2.5 h-2.5 rounded-full bg-sky-400 inline-block mr-1.5"></span>PO4</span>
+                    <span class="inline-flex items-center"><span class="w-2.5 h-2.5 rounded-full bg-emerald-400 inline-block mr-1.5"></span>NO3</span>
+                    <span class="inline-flex items-center"><span class="w-2.5 h-2.5 rounded-full bg-amber-400 inline-block mr-1.5"></span>KH</span>
+                    <span class="inline-flex items-center"><span class="w-2.5 h-2.5 rounded-full bg-purple-400 inline-block mr-1.5"></span>Leitwert</span>
+                </div>
+            </div>
+            <div class="h-64 sm:h-80 w-full relative">
+                <canvas id="parameterChart" style="box-sizing: border-box; display: block; height: 320px; width: 858px;" width="858" height="320"></canvas>
+            </div>
+        </div>
+
+        <!-- Measurements Log Table -->
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-sm">
+            <div class="px-6 py-4 border-b border-slate-800 flex items-center justify-between flex-wrap gap-2">
+                <div>
+                    <h2 class="font-bold text-slate-200">Measurement History</h2>
+                    <p id="recordCount" class="text-xs text-slate-400">35 recorded measurements (Oldest → Newest)</p>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <button onclick="window.exportCSV()" class="px-3 py-1.5 text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg border border-slate-700 transition flex items-center space-x-1.5">
+                        <i class="fa-solid fa-download text-emerald-400"></i>
+                        <span>Download CSV</span>
+                    </button>
+                    <button onclick="window.toggleSortDirection()" class="px-3 py-1.5 text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg border border-slate-700 transition flex items-center space-x-2">
+                        <i class="fa-solid fa-sort"></i>
+                        <span>Toggle Sort</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-sm text-slate-300">
+                    <thead class="bg-slate-950/60 text-xs uppercase text-slate-400 font-semibold border-b border-slate-800">
+                        <tr>
+                            <th class="py-3.5 px-6 cursor-pointer hover:text-slate-200" onclick="window.toggleSortDirection()">Datum <i class="fa-solid fa-sort ml-1"></i></th>
+                            <th class="py-3.5 px-6">PO4</th>
+                            <th class="py-3.5 px-6">NO3</th>
+                            <th class="py-3.5 px-6">KH</th>
+                            <th class="py-3.5 px-6">Leitwert</th>
+                            <th class="py-3.5 px-6">Comment / Action</th>
+                            <th class="py-3.5 px-4 text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody" class="divide-y divide-slate-800/60 font-mono text-xs sm:text-sm"><tr class="hover:bg-slate-800/40 transition border-b border-slate-800/40">
+                    <td class="py-3 px-6 font-medium text-slate-200">17. June</td>
+                    <td class="py-3 px-6 text-cyan-400 font-medium">0.9ppm</td>
+                    <td class="py-3 px-6 text-emerald-400 font-medium">75ppm</td>
+                    <td class="py-3 px-6 text-amber-400 font-medium">-</td>
+                    <td class="py-3 px-6 text-purple-400 font-medium">-</td>
+                    <td class="py-3 px-6 text-slate-400 text-xs italic">Leitungswasser No3 41.2ppm</td>
+                    <td class="py-3 px-4 text-right space-x-2">
+                        <button onclick="window.editEntry('1793449316079_1_moiq')" class="text-slate-400 hover:text-cyan-400 p-1.5 transition rounded-lg hover:bg-slate-800" title="Edit Entry">
+                            <i class="fa-solid fa-pen-to-square"></i>
+                        </button>
+                        <button onclick="window.deleteEntry('1793449316079_1_moiq')" class="text-slate-400 hover:text-rose-400 p-1.5 transition rounded-lg hover:bg-slate-800" title="Delete Entry">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </td>
+                </tr><tr class="hover:bg-slate-800/40 transition border-b border-slate-800/40">
+                    <td class="py-3 px-6 font-medium text-slate-200">21. June</td>
+                    <td class="py-3 px-6 text-cyan-400 font-medium">-</td>
+                    <td class="py-3 px-6 text-emerald-400 font-medium">&lt;25ppm</td>
+                    <td class="py-3 px-6 text-amber-400 font-medium">6.4</td>
+                    <td class="py-3 px-6 text-purple-400 font-medium">310</td>
+                    <td class="py-3 px-6 text-slate-400 text-xs italic">Leitungswasser</td>
+                    <td class="py-3 px-4 text-right space-x-2">
+                        <button onclick="window.editEntry('1793449316079_2_tyap')" class="text-slate-400 hover:text-cyan-400 p-1.5 transition rounded-lg hover:bg-slate-800" title="Edit Entry">
+                            <i class="fa-solid fa-pen-to-square"></i>
+                        </button>
+                        <button onclick="window.deleteEntry('1793449316079_2_tyap')" class="text-slate-400 hover:text-rose-400 p-1.5 transition rounded-lg hover:bg-slate-800" title="Delete Entry">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </td>
+                </tr><tr class="hover:bg-slate-800/40 transition border-b border-slate-800/40">
+                    <td class="py-3 px-6 font-medium text-slate-200">1. July</td>
+                    <td class="py-3 px-6 text-cyan-400 font-medium">-</td>
+                    <td class="py-3 px-6 text-emerald-400 font-medium">12.5</td>
+                    <td class="py-3 px-6 text-amber-400 font-medium">-</td>
+                    <td class="py-3 px-6 text-purple-400 font-medium">-</td>
+                    <td class="py-3 px-6 text-slate-400 text-xs italic">-</td>
+                    <td class="py-3 px-4 text-right space-x-2">
+                        <button onclick="window.editEntry('1793449316079_3_vwiu')" class="text-slate-400 hover:text-cyan-400 p-1.5 transition rounded-lg hover:bg-slate-800" title="Edit Entry">
+                            <i class="fa-solid fa-pen-to-square"></i>
+                        </button>
+                        <button onclick="window.deleteEntry('1793449316079_3_vwiu')" class="text-slate-400 hover:text-rose-400 p-1.5 transition rounded-lg hover:bg-slate-800" title="Delete Entry">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </td>
+                </tr><tr class="hover:bg-slate-800/40 transition border-b border-slate-800/40">
+                    <td class="py-3 px-6 font-medium text-slate-200">21 July</td>
+                    <td class="py-3 px-6 text-cyan-400 font-medium">-</td>
+                    <td class="py-3 px-6 text-emerald-400 font-medium">-</td>
+                    <td class="py-3 px-6 text-amber-400 font-medium">4.8</td>
+                    <td class="py-3 px-6 text-purple-400 font-medium">-</td>
+                    <td class="py-3 px-6 text-slate-400 text-xs italic">Ph 9.34</td>
+                    <td class="py-3 px-4 text-right space-x-2">
+                        <button onclick="window.editEntry('1793449316079_4_on6t')" class="text-slate-400 hover:text-cyan-400 p-1.5 transition rounded-lg hover:bg-slate-800" title="Edit Entry">
+                            <i class="fa-solid fa-pen-to-square"></i>
+                        </button>
+                        <button onclick="window.deleteEntry('1793449316079_4_on6t')" class="text-slate-400 hover:text-rose-400 p-1.5 transition rounded-lg hover:bg-slate-800" title="Delete Entry">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </td>
+                </tr><tr class="hover:bg-slate-800/40 transition border-b border-slate-800/40">
+                    <td class="py-3 px-6 font-medium text-slate-200">23 July</td>
+                    <td class="py-3 px-6 text-cyan-400 font-medium">-</td>
+                    <td class="py-3 px-6 text-emerald-400 font-medium">-</td>
+                    <td class="py-3 px-6 text-amber-400 font-medium">-</td>
+                    <td class="py-3 px-6 text-purple-400 font-medium">-</td>
+                    <td class="py-3 px-6 text-slate-400 text-xs italic">Ph 6.6 gemessen mit Salty ph Probe</td>
+                    <td class="py-3 px-4 text-right space-x-2">
+                        <button onclick="window.editEntry('1793449316079_5_ij8h')" class="text-slate-400 hover:text-cyan-400 p-1.5 transition rounded-lg hover:bg-slate-800" title="Edit Entry">
+                            <i class="fa-solid fa-pen-to-square"></i>
+                        </button>
+                        <button onclick="window.deleteEntry('1793449316079_5_ij8h')" class="text-slate-400 hover:text-rose-400 p-1.5 transition rounded-lg hover:bg-slate-800" title="Delete Entry">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </td>
+                </tr><tr class="hover:bg-slate-800/40 transition border-b border-slate-800/40">
+                    <td class="py-3 px-6 font-medium text-slate-200">27 July</td>
+                    <td class="py-3 px-6 text-cyan-400 font-medium">&gt;0.9ppm</td>
+                    <td class="py-3 px-6 text-emerald-400 font-medium">31.1</td>
+                    <td class="py-3 px-6 text-amber-400 font-medium">-</td>
+                    <td class="py-3 px-6 text-purple-400 font-medium">-</td>
+                    <td class="py-3 px-6 text-slate-400 text-xs italic">-</td>
+                    <td class="py-3 px-4 text-right space-x-2">
+                        <button onclick="window.editEntry('1793449316079_6_7zdr')" class="text-slate-400 hover:text-cyan-400 p-1.5 transition rounded-lg hover:bg-slate-800" title="Edit Entry">
+                            <i class="fa-solid fa-pen-to-square"></i>
+                        </button>
+                        <button onclick="window.deleteEntry('1793449316079_6_7zdr')" class="text-slate-400 hover:text-rose-400 p-1.5 transition rounded-lg hover:bg-slate-800" title="Delete Entry">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </td>
+                </tr><tr class="hover:bg-slate-800/40 transition border-b border-slate-800/40">
+                    <td class="py-3 px-6 font-medium text-slate-200">28 July</td>
+                    <td class="py-3 px-6 text-cyan-400 font-medium">-</td>
+                    <td class="py-3 px-6 text-emerald-400 font-medium">-</td>
+                    <td class="py-3 px-6 text-amber-400 font-medium">7.1</td>
+                    <td class="py-3 px-6 text-purple-400 font-medium">-</td>
+                    <td class="py-3 px-6 text-slate-400 text-xs italic">2 Wasserwechsel</td>
+                    <td class="py-3 px-4 text-right space-x-2">
+                        <button onclick="window.editEntry('1793449316079_7_s568')" class="text-slate-400 hover:text-cyan-400 p-1.5 transition rounded-lg hover:bg-slate-800" title="Edit Entry">
+                            <i class="fa-solid fa-pen-to-square"></i>
+                        </button>
+                        <button onclick="window.deleteEntry('1793449316079_7_s568')" class="text-slate-400 hover:text-rose-400 p-1.5 transition rounded-lg hover:bg-slate-800" title="Delete Entry">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </td>
+                </tr><tr class="hover:bg-slate-800/40 transition border-b border-slate-800/40">
+                    <td class="py-3 px-6 font-medium text-slate-200">29 July</td>
+                    <td class="py-3 px-6 text-cyan-400 font-medium">0.44ppm</td>
+                    <td class="py-3 px-6 text-emerald-400 font-medium">3.8ppm</td>
+                    <td class="py-3 px-6 text-amber-400 font-medium">-</td>
+                    <td class="py-3 px-6 text-purple-400 font-medium">-</td>
+                    <td class="py-3 px-6 text-slate-400 text-xs italic">1 WW 40%</td>
+                    <td class="py-3 px-4 text-right space-x-2">
+                        <button onclick="window.editEntry('1793449316079_8_nc14')" class="text-slate-400 hover:text-cyan-400 p-1.5 transition rounded-lg hover:bg-slate-800" title="Edit Entry">
+                            <i class="fa-solid fa-pen-to-square"></i>
+                        </button>
+                        <button onclick="window.deleteEntry('1793449316079_8_nc14')" class="text-slate-400 hover:text-rose-400 p-1.5 transition rounded-lg hover:bg-slate-800" title="Delete Entry">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </td>
+                </tr><tr class="hover:bg-slate-800/40 transition border-b border-slate-800/40">
+                    <td class="py-3 px-6 font-medium text-slate-200">30 July</td>
+                    <td class="py-3 px-6 text-cyan-400 font-medium">0.50ppm</td>
+                    <td class="py-3 px-6 text-emerald-400 font-medium">-</td>
+                    <td class="py-3 px-6 text-amber-400 font-medium">-</td>
+                    <td class="py-3 px-6 text-purple-400 font-medium">-</td>
+                    <td class="py-3 px-6 text-slate-400 text-xs italic">500 PO4 Absorber added</td>
+                    <td class="py-3 px-4 text-right space-x-2">
+                        <button onclick="window.editEntry('1793449316079_9_huxj')" class="text-slate-400 hover:text-cyan-400 p-1.5 transition rounded-lg hover:bg-slate-800" title="Edit Entry">
+                            <i class="fa-solid fa-pen-to-square"></i>
+                        </button>
+                        <button onclick="window.deleteEntry('1793449316079_9_huxj')" class="text-slate-400 hover:text-rose-400 p-1.5 transition rounded-lg hover:bg-slate-800" title="Delete Entry">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </td>
+                </tr><tr class="hover:bg-slate-800/40 transition border-b border-slate-800/40">
+                    <td class="py-3 px-6 font-medium text-slate-200">31 July</td>
+                    <td class="py-3 px-6 text-cyan-400 font-medium">0.40ppm</td>
+                    <td class="py-3 px-6 text-emerald-400 font-medium">-</td>
+                    <td class="py-3 px-6 text-amber-400 font-medium">-</td>
+                    <td class="py-3 px-6 text-purple-400 font-medium">-</td>
+                    <td class="py-3 px-6 text-slate-400 text-xs italic">-</td>
+                    <td class="py-3 px-4 text-right space-x-2">
+                        <button onclick="window.editEntry('1793449316079_10_gnbz')" class="text-slate-400 hover:text-cyan-400 p-1.5 transition rounded-lg hover:bg-slate-800" title="Edit Entry">
+                            <i class="fa-solid fa-pen-to-square"></i>
+                        </button>
+                        <button onclick="window.deleteEntry('1793449316079_10_gnbz')" class="text-slate-400 hover:text-rose-400 p-1.5 transition rounded-lg hover:bg-slate-800" title="Delete Entry">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </td>
+                </tr><tr class="hover:bg-slate-800/40 transition border-b border-slate-800/40">
+                    <td class="py-3 px-6 font-medium text-slate-200">01 Aug</td>
+                    <td class="py-3 px-6 text-cyan-400 font-medium">0.36</td>
+                    <td class="py-3 px-6 text-emerald-400 font-medium">-</td>
+                    <td class="py-3 px-6 text-amber-400 font-medium">-</td>
+                    <td class="py-3 px-6 text-purple-400 font-medium">-</td>
+                    <td class="py-3 px-6 text-slate-400 text-xs italic">-</td>
+                    <td class="py-3 px-4 text-right space-x-2">
+                        <button onclick="window.editEntry('1793449316079_11_r7sf')" class="text-slate-400 hover:text-cyan-400 p-1.5 transition rounded-lg hover:bg-slate-800" title="Edit Entry">
+                            <i class="fa-solid fa-pen-to-square"></i>
+                        </button>
+                        <button onclick="window.deleteEntry('1793449316079_11_r7sf')" class="text-slate-400 hover:text-rose-400 p-1.5 transition rounded-lg hover:bg-slate-800" title="Delete Entry">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </td>
+                </tr><tr class="hover:bg-slate-800/40 transition border-b border-slate-800/40">
+                    <td class="py-3 px-6 font-medium text-slate-200">1. Aug</td>
+                    <td class="py-3 px-6 text-cyan-400 font-medium">0.19</td>
+                    <td class="py-3 px-6 text-emerald-400 font-medium">10.9</td>
+                    <td class="py-3 px-6 text-amber-400 font-medium">-</td>
+                    <td class="py-3 px-6 text-purple-400 font-medium">-</td>
+                    <td class="py-3 px-6 text-slate-400 text-xs italic">Licht auf 6 Std. Reduziert</td>
+                    <td class="py-3 px-4 text-right space-x-2">
+                        <button onclick="window.editEntry('1793449316079_12_61u6')" class="text-slate-400 hover:text-cyan-400 p-1.5 transition rounded-lg hover:bg-slate-800" title="Edit Entry">
+                            <i class="fa-solid fa-pen-to-square"></i>
+                        </button>
+                        <button onclick="window.deleteEntry('1793449316079_12_61u6')" class="text-slate-400 hover:text-rose-400 p-1.5 transition rounded-lg hover:bg-slate-800" title="Delete Entry">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </td>
+                </tr><tr class="hover:bg-slate-800/40 transition border-b border-slate-800/40">
+                    <td class="py-3 px-6 font-medium text-slate-200">02 Aug</td>
+                    <td class="py-3 px-6 text-cyan-400 font-medium">0.32</td>
+                    <td class="py-3 px-6 text-emerald-400 font-medium">-</td>
+                    <td class="py-3 px-6 text-amber-400 font-medium">-</td>
+                    <td class="py-3 px-6 text-purple-400 font-medium">-</td>
+                    <td class="py-3 px-6 text-slate-400 text-xs italic">-</td>
+                    <td class="py-3 px-4 text-right space-x-2">
+                        <button onclick="window.editEntry('1793449316079_13_3z4k')" class="text-slate-400 hover:text-cyan-400 p-1.5 transition rounded-lg hover:bg-slate-800" title="Edit Entry">
+                            <i class="fa-solid fa-pen-to-square"></i>
+                        </button>
+                        <button onclick="window.deleteEntry('1793449316079_13_3z4k')" class="text-slate-400 hover:text-rose-400 p-1.5 transition rounded-lg hover:bg-slate-800" title="Delete Entry">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </td>
+                </tr><tr class="hover:bg-slate-800/40 transition border-b border-slate-800/40">
+                    <td class="py-3 px-6 font-medium text-slate-200">04 Aug</td>
+                    <td class="py-3 px-6 text-cyan-400 font-medium">0.4</td>
+                    <td class="py-3 px-6 text-emerald-400 font-medium">-</td>
+                    <td class="py-3 px-6 text-amber-400 font-medium">-</td>
+                    <td class="py-3 px-6 text-purple-400 font-medium">-</td>
+                    <td class="py-3 px-6 text-slate-400 text-xs italic">-</td>
+                    <td class="py-3 px-4 text-right space-x-2">
+                        <button onclick="window.editEntry('1793449316079_14_ta25')" class="text-slate-400 hover:text-cyan-400 p-1.5 transition rounded-lg hover:bg-slate-800" title="Edit Entry">
+                            <i class="fa-solid fa-pen-to-square"></i>
+                        </button>
+                        <button onclick="window.deleteEntry('1793449316079_14_ta25')" class="text-slate-400 hover:text-rose-400 p-1.5 transition rounded-lg hover:bg-slate-800" title="Delete Entry">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </td>
+                </tr><tr class="hover:bg-slate-800/40 transition border-b border-slate-800/40">
+                    <td class="py-3 px-6 font-medium text-slate-200">06 Aug</td>
+                    <td class="py-3 px-6 text-cyan-400 font-medium">0.36</td>
+                    <td class="py-3 px-6 text-emerald-400 font-medium">-</td>
+                    <td class="py-3 px-6 text-amber-400 font-medium">-</td>
+                    <td class="py-3 px-6 text-purple-400 font-medium">-</td>
+                    <td class="py-3 px-6 text-slate-400 text-xs italic">-</td>
+                    <td class="py-3 px-4 text-right space-x-2">
+                        <button onclick="window.editEntry('1793449316079_15_n5nq')" class="text-slate-400 hover:text-cyan-400 p-1.5 transition rounded-lg hover:bg-slate-800" title="Edit Entry">
+                            <i class="fa-solid fa-pen-to-square"></i>
+                        </button>
+                        <button onclick="window.deleteEntry('1793449316079_15_n5nq')" class="text-slate-400 hover:text-rose-400 p-1.5 transition rounded-lg hover:bg-slate-800" title="Delete Entry">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </td>
+                </tr><tr class="hover:bg-slate-800/40 transition border-b border-slate-800/40">
+                    <td class="py-3 px-6 font-medium text-slate-200">07 Aug</td>
+                    <td class="py-3 px-6 text-cyan-400 font-medium">0.27?</td>
+                    <td class="py-3 px-6 text-emerald-400 font-medium">-</td>
+                    <td class="py-3 px-6 text-amber-400 font-medium">-</td>
+                    <td class="py-3 px-6 text-purple-400 font-medium">-</td>
+                    <td class="py-3 px-6 text-slate-400 text-xs italic">Filterauslass: PO4 0.39ppm abends: 0.37ppm</td>
+                    <td class="py-3 px-4 text-right space-x-2">
+                        <button onclick="window.editEntry('1793449316079_16_6mxn')" class="text-slate-400 hover:text-cyan-400 p-1.5 transition rounded-lg hover:bg-slate-800" title="Edit Entry">
+                            <i class="fa-solid fa-pen-to-square"></i>
+                        </button>
+                        <button onclick="window.deleteEntry('1793449316079_16_6mxn')" class="text-slate-400 hover:text-rose-400 p-1.5 transition rounded-lg hover:bg-slate-800" title="Delete Entry">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </td>
+                </tr><tr class="hover:bg-slate-800/40 transition border-b border-slate-800/40">
+                    <td class="py-3 px-6 font-medium text-slate-200">08 Aug</td>
+                    <td class="py-3 px-6 text-cyan-400 font-medium">0.32</td>
+                    <td class="py-3 px-6 text-emerald-400 font-medium">-</td>
+                    <td class="py-3 px-6 text-amber-400 font-medium">-</td>
+                    <td class="py-3 px-6 text-purple-400 font-medium">-</td>
+                    <td class="py-3 px-6 text-slate-400 text-xs italic">-</td>
+                    <td class="py-3 px-4 text-right space-x-2">
+                        <button onclick="window.editEntry('1793449316079_17_bgoa')" class="text-slate-400 hover:text-cyan-400 p-1.5 transition rounded-lg hover:bg-slate-800" title="Edit Entry">
+                            <i class="fa-solid fa-pen-to-square"></i>
+                        </button>
+                        <button onclick="window.deleteEntry('1793449316079_17_bgoa')" class="text-slate-400 hover:text-rose-400 p-1.5 transition rounded-lg hover:bg-slate-800" title="Delete Entry">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </td>
+                </tr><tr class="hover:bg-slate-800/40 transition border-b border-slate-800/40">
+                    <td class="py-3 px-6 font-medium text-slate-200">09 Aug</td>
+                    <td class="py-3 px-6 text-cyan-400 font-medium">0.02</td>
+                    <td class="py-3 px-6 text-emerald-400 font-medium">-</td>
+                    <td class="py-3 px-6 text-amber-400 font-medium">-</td>
+                    <td class="py-3 px-6 text-purple-400 font-medium">-</td>
+                    <td class="py-3 px-6 text-slate-400 text-xs italic">-</td>
+                    <td class="py-3 px-4 text-right space-x-2">
+                        <button onclick="window.editEntry('1793449316079_18_97ds')" class="text-slate-400 hover:text-cyan-400 p-1.5 transition rounded-lg hover:bg-slate-800" title="Edit Entry">
+                            <i class="fa-solid fa-pen-to-square"></i>
+                        </button>
+                        <button onclick="window.deleteEntry('1793449316079_18_97ds')" class="text-slate-400 hover:text-rose-400 p-1.5 transition rounded-lg hover:bg-slate-800" title="Delete Entry">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </td>
+                </tr><tr class="hover:bg-slate-800/40 transition border-b border-slate-800/40">
+                    <td class="py-3 px-6 font-medium text-slate-200">09 Aug</td>
+                    <td class="py-3 px-6 text-cyan-400 font-medium">0.12</td>
+                    <td class="py-3 px-6 text-emerald-400 font-medium">3.4</td>
+                    <td class="py-3 px-6 text-amber-400 font-medium">-</td>
+                    <td class="py-3 px-6 text-purple-400 font-medium">-</td>
+                    <td class="py-3 px-6 text-slate-400 text-xs italic">-</td>
+                    <td class="py-3 px-4 text-right space-x-2">
+                        <button onclick="window.editEntry('1793449316079_19_sbvu')" class="text-slate-400 hover:text-cyan-400 p-1.5 transition rounded-lg hover:bg-slate-800" title="Edit Entry">
+                            <i class="fa-solid fa-pen-to-square"></i>
+                        </button>
+                        <button onclick="window.deleteEntry('1793449316079_19_sbvu')" class="text-slate-400 hover:text-rose-400 p-1.5 transition rounded-lg hover:bg-slate-800" title="Delete Entry">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </td>
+                </tr><tr class="hover:bg-slate-800/40 transition border-b border-slate-800/40">
+                    <td class="py-3 px-6 font-medium text-slate-200">10 Aug</td>
+                    <td class="py-3 px-6 text-cyan-400 font-medium">0.01</td>
+                    <td class="py-3 px-6 text-emerald-400 font-medium">-</td>
+                    <td class="py-3 px-6 text-amber-400 font-medium">-</td>
+                    <td class="py-3 px-6 text-purple-400 font-medium">-</td>
+                    <td class="py-3 px-6 text-slate-400 text-xs italic">PO4 Absorber removed</td>
+                    <td class="py-3 px-4 text-right space-x-2">
+                        <button onclick="window.editEntry('1793449316079_20_g17m')" class="text-slate-400 hover:text-cyan-400 p-1.5 transition rounded-lg hover:bg-slate-800" title="Edit Entry">
+                            <i class="fa-solid fa-pen-to-square"></i>
+                        </button>
+                        <button onclick="window.deleteEntry('1793449316079_20_g17m')" class="text-slate-400 hover:text-rose-400 p-1.5 transition rounded-lg hover:bg-slate-800" title="Delete Entry">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </td>
+                </tr><tr class="hover:bg-slate-800/40 transition border-b border-slate-800/40">
+                    <td class="py-3 px-6 font-medium text-slate-200">11 Aug</td>
+                    <td class="py-3 px-6 text-cyan-400 font-medium">0.15</td>
+                    <td class="py-3 px-6 text-emerald-400 font-medium">-</td>
+                    <td class="py-3 px-6 text-amber-400 font-medium">-</td>
+                    <td class="py-3 px-6 text-purple-400 font-medium">-</td>
+                    <td class="py-3 px-6 text-slate-400 text-xs italic">PO4 Absorber back</td>
+                    <td class="py-3 px-4 text-right space-x-2">
+                        <button onclick="window.editEntry('1793449316079_21_gb3r')" class="text-slate-400 hover:text-cyan-400 p-1.5 transition rounded-lg hover:bg-slate-800" title="Edit Entry">
+                            <i class="fa-solid fa-pen-to-square"></i>
+                        </button>
+                        <button onclick="window.deleteEntry('1793449316079_21_gb3r')" class="text-slate-400 hover:text-rose-400 p-1.5 transition rounded-lg hover:bg-slate-800" title="Delete Entry">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </td>
+                </tr><tr class="hover:bg-slate-800/40 transition border-b border-slate-800/40">
+                    <td class="py-3 px-6 font-medium text-slate-200">12 Aug</td>
+                    <td class="py-3 px-6 text-cyan-400 font-medium">0.11</td>
+                    <td class="py-3 px-6 text-emerald-400 font-medium">-</td>
+                    <td class="py-3 px-6 text-amber-400 font-medium">-</td>
+                    <td class="py-3 px-6 text-purple-400 font-medium">-</td>
+                    <td class="py-3 px-6 text-slate-400 text-xs italic">-</td>
+                    <td class="py-3 px-4 text-right space-x-2">
+                        <button onclick="window.editEntry('1793449316079_22_p2m5')" class="text-slate-400 hover:text-cyan-400 p-1.5 transition rounded-lg hover:bg-slate-800" title="Edit Entry">
+                            <i class="fa-solid fa-pen-to-square"></i>
+                        </button>
+                        <button onclick="window.deleteEntry('1793449316079_22_p2m5')" class="text-slate-400 hover:text-rose-400 p-1.5 transition rounded-lg hover:bg-slate-800" title="Delete Entry">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </td>
+                </tr><tr class="hover:bg-slate-800/40 transition border-b border-slate-800/40">
+                    <td class="py-3 px-6 font-medium text-slate-200">14 Aug</td>
+                    <td class="py-3 px-6 text-cyan-400 font-medium">0.06</td>
+                    <td class="py-3 px-6 text-emerald-400 font-medium">-</td>
+                    <td class="py-3 px-6 text-amber-400 font-medium">-</td>
+                    <td class="py-3 px-6 text-purple-400 font-medium">-</td>
+                    <td class="py-3 px-6 text-slate-400 text-xs italic">-</td>
+                    <td class="py-3 px-4 text-right space-x-2">
+                        <button onclick="window.editEntry('1793449316079_23_0tjf')" class="text-slate-400 hover:text-cyan-400 p-1.5 transition rounded-lg hover:bg-slate-800" title="Edit Entry">
+                            <i class="fa-solid fa-pen-to-square"></i>
+                        </button>
+                        <button onclick="window.deleteEntry('1793449316079_23_0tjf')" class="text-slate-400 hover:text-rose-400 p-1.5 transition rounded-lg hover:bg-slate-800" title="Delete Entry">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </td>
+                </tr><tr class="hover:bg-slate-800/40 transition border-b border-slate-800/40">
+                    <td class="py-3 px-6 font-medium text-slate-200">16 Aug</td>
+                    <td class="py-3 px-6 text-cyan-400 font-medium">0.08</td>
+                    <td class="py-3 px-6 text-emerald-400 font-medium">-</td>
+                    <td class="py-3 px-6 text-amber-400 font-medium">-</td>
+                    <td class="py-3 px-6 text-purple-400 font-medium">-</td>
+                    <td class="py-3 px-6 text-slate-400 text-xs italic">-</td>
+                    <td class="py-3 px-4 text-right space-x-2">
+                        <button onclick="window.editEntry('1793449316079_24_ce18')" class="text-slate-400 hover:text-cyan-400 p-1.5 transition rounded-lg hover:bg-slate-800" title="Edit Entry">
+                            <i class="fa-solid fa-pen-to-square"></i>
+                        </button>
+                        <button onclick="window.deleteEntry('1793449316079_24_ce18')" class="text-slate-400 hover:text-rose-400 p-1.5 transition rounded-lg hover:bg-slate-800" title="Delete Entry">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </td>
+                </tr><tr class="hover:bg-slate-800/40 transition border-b border-slate-800/40">
+                    <td class="py-3 px-6 font-medium text-slate-200">18 Aug</td>
+                    <td class="py-3 px-6 text-cyan-400 font-medium">0.11</td>
+                    <td class="py-3 px-6 text-emerald-400 font-medium">-</td>
+                    <td class="py-3 px-6 text-amber-400 font-medium">-</td>
+                    <td class="py-3 px-6 text-purple-400 font-medium">-</td>
+                    <td class="py-3 px-6 text-slate-400 text-xs italic">-</td>
+                    <td class="py-3 px-4 text-right space-x-2">
+                        <button onclick="window.editEntry('1793449316079_25_rgj0')" class="text-slate-400 hover:text-cyan-400 p-1.5 transition rounded-lg hover:bg-slate-800" title="Edit Entry">
+                            <i class="fa-solid fa-pen-to-square"></i>
+                        </button>
+                        <button onclick="window.deleteEntry('1793449316079_25_rgj0')" class="text-slate-400 hover:text-rose-400 p-1.5 transition rounded-lg hover:bg-slate-800" title="Delete Entry">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </td>
+                </tr><tr class="hover:bg-slate-800/40 transition border-b border-slate-800/40">
+                    <td class="py-3 px-6 font-medium text-slate-200">20 Aug</td>
+                    <td class="py-3 px-6 text-cyan-400 font-medium">0.09</td>
+                    <td class="py-3 px-6 text-emerald-400 font-medium">-</td>
+                    <td class="py-3 px-6 text-amber-400 font-medium">-</td>
+                    <td class="py-3 px-6 text-purple-400 font-medium">-</td>
+                    <td class="py-3 px-6 text-slate-400 text-xs italic">-</td>
+                    <td class="py-3 px-4 text-right space-x-2">
+                        <button onclick="window.editEntry('1793449316079_26_bp6u')" class="text-slate-400 hover:text-cyan-400 p-1.5 transition rounded-lg hover:bg-slate-800" title="Edit Entry">
+                            <i class="fa-solid fa-pen-to-square"></i>
+                        </button>
+                        <button onclick="window.deleteEntry('1793449316079_26_bp6u')" class="text-slate-400 hover:text-rose-400 p-1.5 transition rounded-lg hover:bg-slate-800" title="Delete Entry">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </td>
+                </tr><tr class="hover:bg-slate-800/40 transition border-b border-slate-800/40">
+                    <td class="py-3 px-6 font-medium text-slate-200">21 Aug</td>
+                    <td class="py-3 px-6 text-cyan-400 font-medium">0.08</td>
+                    <td class="py-3 px-6 text-emerald-400 font-medium">-</td>
+                    <td class="py-3 px-6 text-amber-400 font-medium">-</td>
+                    <td class="py-3 px-6 text-purple-400 font-medium">-</td>
+                    <td class="py-3 px-6 text-slate-400 text-xs italic">-</td>
+                    <td class="py-3 px-4 text-right space-x-2">
+                        <button onclick="window.editEntry('1793449316079_27_ca6d')" class="text-slate-400 hover:text-cyan-400 p-1.5 transition rounded-lg hover:bg-slate-800" title="Edit Entry">
+                            <i class="fa-solid fa-pen-to-square"></i>
+                        </button>
+                        <button onclick="window.deleteEntry('1793449316079_27_ca6d')" class="text-slate-400 hover:text-rose-400 p-1.5 transition rounded-lg hover:bg-slate-800" title="Delete Entry">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </td>
+                </tr><tr class="hover:bg-slate-800/40 transition border-b border-slate-800/40">
+                    <td class="py-3 px-6 font-medium text-slate-200">4 Sept</td>
+                    <td class="py-3 px-6 text-cyan-400 font-medium">0.21</td>
+                    <td class="py-3 px-6 text-emerald-400 font-medium">24.6</td>
+                    <td class="py-3 px-6 text-amber-400 font-medium">-</td>
+                    <td class="py-3 px-6 text-purple-400 font-medium">450</td>
+                    <td class="py-3 px-6 text-slate-400 text-xs italic">WW Hälfte</td>
+                    <td class="py-3 px-4 text-right space-x-2">
+                        <button onclick="window.editEntry('1793449316079_28_2y4f')" class="text-slate-400 hover:text-cyan-400 p-1.5 transition rounded-lg hover:bg-slate-800" title="Edit Entry">
+                            <i class="fa-solid fa-pen-to-square"></i>
+                        </button>
+                        <button onclick="window.deleteEntry('1793449316079_28_2y4f')" class="text-slate-400 hover:text-rose-400 p-1.5 transition rounded-lg hover:bg-slate-800" title="Delete Entry">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </td>
+                </tr><tr class="hover:bg-slate-800/40 transition border-b border-slate-800/40">
+                    <td class="py-3 px-6 font-medium text-slate-200">11 Oct</td>
+                    <td class="py-3 px-6 text-cyan-400 font-medium">0.9 outside</td>
+                    <td class="py-3 px-6 text-emerald-400 font-medium">-</td>
+                    <td class="py-3 px-6 text-amber-400 font-medium">-</td>
+                    <td class="py-3 px-6 text-purple-400 font-medium">-</td>
+                    <td class="py-3 px-6 text-slate-400 text-xs italic">-</td>
+                    <td class="py-3 px-4 text-right space-x-2">
+                        <button onclick="window.editEntry('1793449316079_29_msfh')" class="text-slate-400 hover:text-cyan-400 p-1.5 transition rounded-lg hover:bg-slate-800" title="Edit Entry">
+                            <i class="fa-solid fa-pen-to-square"></i>
+                        </button>
+                        <button onclick="window.deleteEntry('1793449316079_29_msfh')" class="text-slate-400 hover:text-rose-400 p-1.5 transition rounded-lg hover:bg-slate-800" title="Delete Entry">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </td>
+                </tr><tr class="hover:bg-slate-800/40 transition border-b border-slate-800/40">
+                    <td class="py-3 px-6 font-medium text-slate-200">13 Oct</td>
+                    <td class="py-3 px-6 text-cyan-400 font-medium">0.9 outside</td>
+                    <td class="py-3 px-6 text-emerald-400 font-medium">27.2</td>
+                    <td class="py-3 px-6 text-amber-400 font-medium">-</td>
+                    <td class="py-3 px-6 text-purple-400 font-medium">500</td>
+                    <td class="py-3 px-6 text-slate-400 text-xs italic">WW Hälfte</td>
+                    <td class="py-3 px-4 text-right space-x-2">
+                        <button onclick="window.editEntry('1793449316080_30_roew')" class="text-slate-400 hover:text-cyan-400 p-1.5 transition rounded-lg hover:bg-slate-800" title="Edit Entry">
+                            <i class="fa-solid fa-pen-to-square"></i>
+                        </button>
+                        <button onclick="window.deleteEntry('1793449316080_30_roew')" class="text-slate-400 hover:text-rose-400 p-1.5 transition rounded-lg hover:bg-slate-800" title="Delete Entry">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </td>
+                </tr><tr class="hover:bg-slate-800/40 transition border-b border-slate-800/40">
+                    <td class="py-3 px-6 font-medium text-slate-200">13 Oct</td>
+                    <td class="py-3 px-6 text-cyan-400 font-medium">0.9 outside</td>
+                    <td class="py-3 px-6 text-emerald-400 font-medium">19</td>
+                    <td class="py-3 px-6 text-amber-400 font-medium">-</td>
+                    <td class="py-3 px-6 text-purple-400 font-medium">350</td>
+                    <td class="py-3 px-6 text-slate-400 text-xs italic">-</td>
+                    <td class="py-3 px-4 text-right space-x-2">
+                        <button onclick="window.editEntry('1793449316080_31_qah6')" class="text-slate-400 hover:text-cyan-400 p-1.5 transition rounded-lg hover:bg-slate-800" title="Edit Entry">
+                            <i class="fa-solid fa-pen-to-square"></i>
+                        </button>
+                        <button onclick="window.deleteEntry('1793449316080_31_qah6')" class="text-slate-400 hover:text-rose-400 p-1.5 transition rounded-lg hover:bg-slate-800" title="Delete Entry">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </td>
+                </tr><tr class="hover:bg-slate-800/40 transition border-b border-slate-800/40">
+                    <td class="py-3 px-6 font-medium text-slate-200">24 Oct</td>
+                    <td class="py-3 px-6 text-cyan-400 font-medium">-</td>
+                    <td class="py-3 px-6 text-emerald-400 font-medium">-</td>
+                    <td class="py-3 px-6 text-amber-400 font-medium">-</td>
+                    <td class="py-3 px-6 text-purple-400 font-medium">-</td>
+                    <td class="py-3 px-6 text-slate-400 text-xs italic">WW Hälfte</td>
+                    <td class="py-3 px-4 text-right space-x-2">
+                        <button onclick="window.editEntry('1793449316080_32_gdpb')" class="text-slate-400 hover:text-cyan-400 p-1.5 transition rounded-lg hover:bg-slate-800" title="Edit Entry">
+                            <i class="fa-solid fa-pen-to-square"></i>
+                        </button>
+                        <button onclick="window.deleteEntry('1793449316080_32_gdpb')" class="text-slate-400 hover:text-rose-400 p-1.5 transition rounded-lg hover:bg-slate-800" title="Delete Entry">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </td>
+                </tr><tr class="hover:bg-slate-800/40 transition border-b border-slate-800/40">
+                    <td class="py-3 px-6 font-medium text-slate-200">25 Oct</td>
+                    <td class="py-3 px-6 text-cyan-400 font-medium">0.9</td>
+                    <td class="py-3 px-6 text-emerald-400 font-medium">13.4</td>
+                    <td class="py-3 px-6 text-amber-400 font-medium">-</td>
+                    <td class="py-3 px-6 text-purple-400 font-medium">-</td>
+                    <td class="py-3 px-6 text-slate-400 text-xs italic">-</td>
+                    <td class="py-3 px-4 text-right space-x-2">
+                        <button onclick="window.editEntry('1793449316080_33_p17u')" class="text-slate-400 hover:text-cyan-400 p-1.5 transition rounded-lg hover:bg-slate-800" title="Edit Entry">
+                            <i class="fa-solid fa-pen-to-square"></i>
+                        </button>
+                        <button onclick="window.deleteEntry('1793449316080_33_p17u')" class="text-slate-400 hover:text-rose-400 p-1.5 transition rounded-lg hover:bg-slate-800" title="Delete Entry">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </td>
+                </tr><tr class="hover:bg-slate-800/40 transition border-b border-slate-800/40">
+                    <td class="py-3 px-6 font-medium text-slate-200">30 Oct</td>
+                    <td class="py-3 px-6 text-cyan-400 font-medium">-</td>
+                    <td class="py-3 px-6 text-emerald-400 font-medium">-</td>
+                    <td class="py-3 px-6 text-amber-400 font-medium">-</td>
+                    <td class="py-3 px-6 text-purple-400 font-medium">-</td>
+                    <td class="py-3 px-6 text-slate-400 text-xs italic">40&amp; WW, 400uS Cond.</td>
+                    <td class="py-3 px-4 text-right space-x-2">
+                        <button onclick="window.editEntry('1793449316080_34_hpv5')" class="text-slate-400 hover:text-cyan-400 p-1.5 transition rounded-lg hover:bg-slate-800" title="Edit Entry">
+                            <i class="fa-solid fa-pen-to-square"></i>
+                        </button>
+                        <button onclick="window.deleteEntry('1793449316080_34_hpv5')" class="text-slate-400 hover:text-rose-400 p-1.5 transition rounded-lg hover:bg-slate-800" title="Delete Entry">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </td>
+                </tr><tr class="hover:bg-slate-800/40 transition border-b border-slate-800/40">
+                    <td class="py-3 px-6 font-medium text-slate-200">1 Nov</td>
+                    <td class="py-3 px-6 text-cyan-400 font-medium">&gt;0.9</td>
+                    <td class="py-3 px-6 text-emerald-400 font-medium">-</td>
+                    <td class="py-3 px-6 text-amber-400 font-medium">-</td>
+                    <td class="py-3 px-6 text-purple-400 font-medium">-</td>
+                    <td class="py-3 px-6 text-slate-400 text-xs italic">-</td>
+                    <td class="py-3 px-4 text-right space-x-2">
+                        <button onclick="window.editEntry('1793531570322')" class="text-slate-400 hover:text-cyan-400 p-1.5 transition rounded-lg hover:bg-slate-800" title="Edit Entry">
+                            <i class="fa-solid fa-pen-to-square"></i>
+                        </button>
+                        <button onclick="window.deleteEntry('1793531570322')" class="text-slate-400 hover:text-rose-400 p-1.5 transition rounded-lg hover:bg-slate-800" title="Delete Entry">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </td>
+                </tr></tbody>
+                </table>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Modal: Entry Add/Edit -->
+    <div id="entryModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <h3 id="modalTitle" class="font-bold text-slate-100">Edit Measurement Record</h3>
+                <button onclick="window.closeEntryModal()" class="text-slate-400 hover:text-slate-200 text-lg">×</button>
+            </div>
+            
+            <form id="entryForm" onsubmit="window.saveEntryForm(event)" class="space-y-4 text-sm">
+                <input type="hidden" id="entryId" value="1793531570322">
+                <div>
+                    <label class="block text-xs font-medium text-slate-400 mb-1">Datum / Date</label>
+                    <input type="text" id="fieldDate" required="" placeholder="e.g. 25 Oct" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-slate-100 focus:outline-none focus:border-cyan-500">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-400 mb-1">PO4 (ppm)</label>
+                        <input type="text" id="fieldPo4" placeholder="0.9" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-slate-100 focus:outline-none focus:border-cyan-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-400 mb-1">NO3 (ppm)</label>
+                        <input type="text" id="fieldNo3" placeholder="13.4" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-slate-100 focus:outline-none focus:border-cyan-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-400 mb-1">KH (°dH)</label>
+                        <input type="text" id="fieldKh" placeholder="6.4" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-slate-100 focus:outline-none focus:border-cyan-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-400 mb-1">Leitwert (µS)</label>
+                        <input type="text" id="fieldLeitwert" placeholder="350" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-slate-100 focus:outline-none focus:border-cyan-500">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-400 mb-1">Comment / Notes</label>
+                    <input type="text" id="fieldComment" placeholder="e.g. Water change 40%" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-slate-100 focus:outline-none focus:border-cyan-500">
+                </div>
+
+                <div class="flex items-center justify-end space-x-3 pt-2">
+                    <button type="button" onclick="window.closeEntryModal()" class="px-4 py-2 text-xs font-medium text-slate-400 hover:text-slate-200 bg-slate-800 rounded-lg">Cancel</button>
+                    <button type="submit" class="px-4 py-2 text-xs font-medium text-white bg-cyan-600 hover:bg-cyan-500 rounded-lg shadow">Save Measurement</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: Google Drive & Exports -->
+    <div id="driveModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <h3 class="font-bold text-slate-100 flex items-center space-x-2">
+                    <i class="fa-brands fa-google-drive text-emerald-400"></i>
+                    <span>Google Drive &amp; Application Export</span>
+                </h3>
+                <button onclick="window.closeDriveModal()" class="text-slate-400 hover:text-slate-200 text-lg">×</button>
+            </div>
+
+            <div class="space-y-3 text-xs text-slate-300">
+                <p>Save your complete aquarium measurement database to Google Drive or export as spreadsheets:</p>
+                <div class="grid grid-cols-1 gap-2.5 pt-1">
+                    <button onclick="document.getElementById('fileImporter').click()" class="w-full p-3 bg-slate-950 border border-slate-800 hover:border-slate-700 rounded-xl flex items-center justify-between transition text-left">
+                        <div class="flex items-center space-x-3">
+                            <i class="fa-solid fa-file-import text-amber-400 text-lg"></i>
+                            <div>
+                                <div class="font-semibold text-slate-200">Import CSV or JSON File</div>
+                                <div class="text-[11px] text-slate-400">Upload existing water parameters dataset</div>
+                            </div>
+                        </div>
+                        <i class="fa-solid fa-upload text-slate-500"></i>
+                    </button>
+
+                    <button onclick="window.exportCSV()" class="w-full p-3 bg-slate-950 border border-slate-800 hover:border-slate-700 rounded-xl flex items-center justify-between transition text-left">
+                        <div class="flex items-center space-x-3">
+                            <i class="fa-solid fa-file-csv text-emerald-400 text-lg"></i>
+                            <div>
+                                <div class="font-semibold text-slate-200">Export CSV Spreadsheet</div>
+                                <div class="text-[11px] text-slate-400">Open in Google Sheets, Excel, or Numbers</div>
+                            </div>
+                        </div>
+                        <i class="fa-solid fa-download text-slate-500"></i>
+                    </button>
+
+                    <button onclick="window.exportJSONBackup()" class="w-full p-3 bg-slate-950 border border-slate-800 hover:border-slate-700 rounded-xl flex items-center justify-between transition text-left">
+                        <div class="flex items-center space-x-3">
+                            <i class="fa-solid fa-database text-cyan-400 text-lg"></i>
+                            <div>
+                                <div class="font-semibold text-slate-200">Download JSON Data Backup</div>
+                                <div class="text-[11px] text-slate-400">Complete raw database backup file</div>
+                            </div>
+                        </div>
+                        <i class="fa-solid fa-download text-slate-500"></i>
+                    </button>
+
+                    <button onclick="window.exportApplicationHTML()" class="w-full p-3 bg-slate-950 border border-slate-800 hover:border-slate-700 rounded-xl flex items-center justify-between transition text-left">
+                        <div class="flex items-center space-x-3">
+                            <i class="fa-solid fa-code text-purple-400 text-lg"></i>
+                            <div>
+                                <div class="font-semibold text-slate-200">Download Standalone Web App (.html)</div>
+                                <div class="text-[11px] text-slate-400">Save executable web app directly to Google Drive</div>
+                            </div>
+                        </div>
+                        <i class="fa-solid fa-download text-slate-500"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="flex justify-end pt-2">
+                <button onclick="window.closeDriveModal()" class="px-4 py-2 text-xs font-medium text-slate-300 bg-slate-800 hover:bg-slate-700 rounded-lg">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Cloud Sync -->
+    <div id="syncModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <h3 class="font-bold text-slate-100 flex items-center space-x-2">
+                    <i class="fa-solid fa-rotate text-cyan-400"></i>
+                    <span>Cloud Synchronization</span>
+                </h3>
+                <button onclick="window.closeSyncModal()" class="text-slate-400 hover:text-slate-200 text-lg">×</button>
+            </div>
+
+            <div class="space-y-3 text-xs text-slate-300">
+                <p>Synchronize your aquarium readings across browser tabs, windows, and local sessions.</p>
+                
+                <div>
+                    <label class="block font-medium text-slate-400 mb-1">Active Sync Key:</label>
+                    <div class="flex space-x-2">
+                        <input type="text" id="syncIdDisplay" placeholder="Local sync key" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-cyan-400 font-mono text-xs focus:outline-none focus:border-cyan-500">
+                        <button onclick="window.copySyncId()" class="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg border border-slate-700 font-medium">Copy</button>
+                    </div>
+                </div>
+
+                <div id="syncStatus" class="hidden text-xs py-2 px-3 rounded-lg bg-slate-950 border border-slate-800"></div>
+
+                <div class="grid grid-cols-2 gap-2 pt-2">
+                    <button onclick="window.pushToLocalSync()" class="w-full py-2.5 px-3 bg-cyan-600 hover:bg-cyan-500 text-white font-medium rounded-lg transition flex items-center justify-center space-x-1.5 shadow">
+                        <i class="fa-solid fa-floppy-disk"></i>
+                        <span>Save Local Cache</span>
+                    </button>
+                    <button onclick="window.pullFromLocalSync()" class="w-full py-2.5 px-3 bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium rounded-lg border border-slate-700 transition flex items-center justify-center space-x-1.5">
+                        <i class="fa-solid fa-rotate text-cyan-400"></i>
+                        <span>Reload Saved Data</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="flex justify-end pt-2">
+                <button onclick="window.closeSyncModal()" class="px-4 py-2 text-xs font-medium text-slate-300 bg-slate-800 hover:bg-slate-700 rounded-lg">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Logic Script Block -->
+    <script>
+        // Initial Preloaded Dataset
+        const defaultEntries = [
+            { id: '1793449316079_1_moiq', date: '17. June', po4: '0.9ppm', no3: '75ppm', kh: '', leitwert: '', comment: 'Leitungswasser No3 41.2ppm' },
+            { id: '1793449316079_2_tyap', date: '21. June', po4: '', no3: '<25ppm', kh: '6.4', leitwert: '310', comment: 'Leitungswasser' },
+            { id: '1793449316079_3_vwiu', date: '1. July', po4: '', no3: '12.5', kh: '', leitwert: '', comment: '' },
+            { id: '1793449316079_4_on6t', date: '21 July', po4: '', no3: '', kh: '4.8', leitwert: '', comment: 'Ph 9.34' },
+            { id: '1793449316079_5_ij8h', date: '23 July', po4: '', no3: '', kh: '', leitwert: '', comment: 'Ph 6.6 gemessen mit Salty ph Probe' },
+            { id: '1793449316079_6_7zdr', date: '27 July', po4: '>0.9ppm', no3: '31.1', kh: '', leitwert: '', comment: '' },
+            { id: '1793449316079_7_s568', date: '28 July', po4: '', no3: '', kh: '7.1', leitwert: '', comment: '2 Wasserwechsel' },
+            { id: '1793449316079_8_nc14', date: '29 July', po4: '0.44ppm', no3: '3.8ppm', kh: '', leitwert: '', comment: '1 WW 40%' },
+            { id: '1793449316079_9_huxj', date: '30 July', po4: '0.50ppm', no3: '', kh: '', leitwert: '', comment: '500 PO4 Absorber added' },
+            { id: '1793449316079_10_gnbz', date: '31 July', po4: '0.40ppm', no3: '', kh: '', leitwert: '', comment: '' },
+            { id: '1793449316079_11_r7sf', date: '01 Aug', po4: '0.36', no3: '', kh: '', leitwert: '', comment: '' },
+            { id: '1793449316079_12_61u6', date: '1. Aug', po4: '0.19', no3: '10.9', kh: '', leitwert: '', comment: 'Licht auf 6 Std. Reduziert' },
+            { id: '1793449316079_13_3z4k', date: '02 Aug', po4: '0.32', no3: '', kh: '', leitwert: '', comment: '' },
+            { id: '1793449316079_14_ta25', date: '04 Aug', po4: '0.4', no3: '', kh: '', leitwert: '', comment: '' },
+            { id: '1793449316079_15_n5nq', date: '06 Aug', po4: '0.36', no3: '', kh: '', leitwert: '', comment: '' },
+            { id: '1793449316079_16_6mxn', date: '07 Aug', po4: '0.27?', no3: '', kh: '', leitwert: '', comment: 'Filterauslass: PO4 0.39ppm abends: 0.37ppm' },
+            { id: '1793449316079_17_bgoa', date: '08 Aug', po4: '0.32', no3: '', kh: '', leitwert: '', comment: '' },
+            { id: '1793449316079_18_97ds', date: '09 Aug', po4: '0.02', no3: '', kh: '', leitwert: '', comment: '' },
+            { id: '1793449316079_19_sbvu', date: '09 Aug', po4: '0.12', no3: '3.4', kh: '', leitwert: '', comment: '' },
+            { id: '1793449316079_20_g17m', date: '10 Aug', po4: '0.01', no3: '', kh: '', leitwert: '', comment: 'PO4 Absorber removed' },
+            { id: '1793449316079_21_gb3r', date: '11 Aug', po4: '0.15', no3: '', kh: '', leitwert: '', comment: 'PO4 Absorber back' },
+            { id: '1793449316079_22_p2m5', date: '12 Aug', po4: '0.11', no3: '', kh: '', leitwert: '', comment: '' },
+            { id: '1793449316079_23_0tjf', date: '14 Aug', po4: '0.06', no3: '', kh: '', leitwert: '', comment: '' },
+            { id: '1793449316079_24_ce18', date: '16 Aug', po4: '0.08', no3: '', kh: '', leitwert: '', comment: '' },
+            { id: '1793449316079_25_rgj0', date: '18 Aug', po4: '0.11', no3: '', kh: '', leitwert: '', comment: '' },
+            { id: '1793449316079_26_bp6u', date: '20 Aug', po4: '0.09', no3: '', kh: '', leitwert: '', comment: '' },
+            { id: '1793449316079_27_ca6d', date: '21 Aug', po4: '0.08', no3: '', kh: '', leitwert: '', comment: '' },
+            { id: '1793449316079_28_2y4f', date: '4 Sept', po4: '0.21', no3: '24.6', kh: '', leitwert: '450', comment: 'WW Hälfte' },
+            { id: '1793449316079_29_msfh', date: '11 Oct', po4: '0.9 outside', no3: '', kh: '', leitwert: '', comment: '' },
+            { id: '1793449316080_30_roew', date: '13 Oct', po4: '0.9 outside', no3: '27.2', kh: '', leitwert: '500', comment: 'WW Hälfte' },
+            { id: '1793449316080_31_qah6', date: '13 Oct', po4: '0.9 outside', no3: '19', kh: '', leitwert: '350', comment: '' },
+            { id: '1793449316080_32_gdpb', date: '24 Oct', po4: '', no3: '', kh: '', leitwert: '', comment: 'WW Hälfte' },
+            { id: '1793449316080_33_p17u', date: '25 Oct', po4: '0.9', no3: '13.4', kh: '', leitwert: '', comment: '' },
+            { id: '1793449316080_34_hpv5', date: '30 Oct', po4: '', no3: '', kh: '', leitwert: '', comment: '40& WW, 400uS Cond.' }
+        ];
+
+        // Load cached local storage or set default
+        const localCache = localStorage.getItem('aquarium_data_entries');
+        try {
+            window.dataEntries = localCache ? JSON.parse(localCache) : [...defaultEntries];
+        } catch (e) {
+            window.dataEntries = [...defaultEntries];
+        }
+
+        window.sortAscending = true;
+
+        window.saveLocal = function() {
+            try {
+                localStorage.setItem('aquarium_data_entries', JSON.stringify(window.dataEntries));
+            } catch (e) {}
+        };
+
+        window.parseVal = function(val) {
+            if (!val) return null;
+            const cleaned = val.replace(/[^0-9.]/g, '');
+            const parsed = parseFloat(cleaned);
+            return isNaN(parsed) ? null : parsed;
+        };
+
+        window.parseDate = function(dateStr) {
+            if (!dateStr) return 0;
+            const monthMap = {
+                'jan': 0, 'feb': 1, 'mar': 2, 'apr': 3, 'may': 4, 'jun': 5,
+                'june': 5, 'jul': 6, 'july': 6, 'aug': 7, 'sep': 8, 'sept': 8,
+                'oct': 9, 'nov': 10, 'dec': 11
+            };
+            const parts = dateStr.trim().split(/\s+/);
+            if (parts.length >= 2) {
+                let day = parseInt(parts[0].replace(/[^0-9]/g, '')) || 1;
+                let monthStr = parts[1].toLowerCase().replace(/[^a-z]/g, '');
+                let month = monthMap[monthStr] !== undefined ? monthMap[monthStr] : 0;
+                return new Date(2024, month, day).getTime();
+            }
+            return 0;
+        };
+
+        window.toggleSortDirection = function() {
+            window.sortAscending = !window.sortAscending;
+            window.renderTable();
+        };
+
+        window.renderTable = function() {
+            const tbody = document.getElementById('tableBody');
+            const recordCount = document.getElementById('recordCount');
+            if (!tbody) return;
+
+            window.dataEntries.sort((a, b) => {
+                const timeA = window.parseDate(a.date);
+                const timeB = window.parseDate(b.date);
+                return window.sortAscending ? timeA - timeB : timeB - timeA;
+            });
+
+            tbody.innerHTML = '';
+            recordCount.innerText = `${window.dataEntries.length} recorded measurements (${window.sortAscending ? 'Oldest → Newest' : 'Newest → Oldest'})`;
+
+            window.dataEntries.forEach(entry => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-800/40 transition border-b border-slate-800/40";
+                tr.innerHTML = `
+                    <td class="py-3 px-6 font-medium text-slate-200">${entry.date || '-'}</td>
+                    <td class="py-3 px-6 text-cyan-400 font-medium">${entry.po4 || '-'}</td>
+                    <td class="py-3 px-6 text-emerald-400 font-medium">${entry.no3 || '-'}</td>
+                    <td class="py-3 px-6 text-amber-400 font-medium">${entry.kh || '-'}</td>
+                    <td class="py-3 px-6 text-purple-400 font-medium">${entry.leitwert || '-'}</td>
+                    <td class="py-3 px-6 text-slate-400 text-xs italic">${entry.comment || '-'}</td>
+                    <td class="py-3 px-4 text-right space-x-2">
+                        <button onclick="window.editEntry('${entry.id}')" class="text-slate-400 hover:text-cyan-400 p-1.5 transition rounded-lg hover:bg-slate-800" title="Edit Entry">
+                            <i class="fa-solid fa-pen-to-square"></i>
+                        </button>
+                        <button onclick="window.deleteEntry('${entry.id}')" class="text-slate-400 hover:text-rose-400 p-1.5 transition rounded-lg hover:bg-slate-800" title="Delete Entry">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            window.saveLocal();
+            window.updateSummaryCards();
+            window.updateChart();
+        };
+
+        window.updateSummaryCards = function() {
+            if (!window.dataEntries.length) return;
+
+            let latestPo4 = '-', latestNo3 = '-', latestKh = '-', latestLeitwert = '-';
+
+            for (let i = window.dataEntries.length - 1; i >= 0; i--) {
+                const item = window.dataEntries[i];
+                if (latestPo4 === '-' && item.po4) latestPo4 = item.po4;
+                if (latestNo3 === '-' && item.no3) latestNo3 = item.no3;
+                if (latestKh === '-' && item.kh) latestKh = item.kh;
+                if (latestLeitwert === '-' && item.leitwert) latestLeitwert = item.leitwert;
+            }
+
+            document.getElementById('cardPo4Val').innerText = latestPo4;
+            document.getElementById('cardNo3Val').innerText = latestNo3;
+            document.getElementById('cardKhVal').innerText = latestKh;
+            document.getElementById('cardLeitwertVal').innerText = latestLeitwert;
+        };
+
+        window.updateChart = function() {
+            const canvas = document.getElementById('parameterChart');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            if (!ctx) return;
+
+            const labels = window.dataEntries.map(e => e.date);
+            const po4Data = window.dataEntries.map(e => window.parseVal(e.po4));
+            const no3Data = window.dataEntries.map(e => window.parseVal(e.no3));
+            const khData = window.dataEntries.map(e => window.parseVal(e.kh));
+            const leitwertData = window.dataEntries.map(e => window.parseVal(e.leitwert));
+
+            if (window.aquariumChart) {
+                window.aquariumChart.destroy();
+            }
+
+            window.aquariumChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        { label: 'PO4 (ppm)', data: po4Data, borderColor: '#38bdf8', backgroundColor: 'rgba(56, 189, 248, 0.1)', borderWidth: 2, tension: 0.3, spanGaps: true },
+                        { label: 'NO3 (ppm)', data: no3Data, borderColor: '#34d399', backgroundColor: 'rgba(52, 211, 153, 0.1)', borderWidth: 2, tension: 0.3, spanGaps: true },
+                        { label: 'KH', data: khData, borderColor: '#fbbf24', backgroundColor: 'rgba(251, 191, 36, 0.1)', borderWidth: 2, tension: 0.3, spanGaps: true },
+                        { label: 'Conductivity (µS)', data: leitwertData, borderColor: '#c084fc', backgroundColor: 'rgba(192, 132, 252, 0.1)', borderWidth: 2, tension: 0.3, spanGaps: true, yAxisID: 'y1' }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: { mode: 'index', intersect: false },
+                    plugins: { legend: { labels: { color: '#94a3b8', font: { family: 'Inter', size: 12 } } } },
+                    scales: {
+                        x: { grid: { color: 'rgba(51, 65, 85, 0.3)' }, ticks: { color: '#94a3b8' } },
+                        y: { grid: { color: 'rgba(51, 65, 85, 0.3)' }, ticks: { color: '#94a3b8' }, title: { display: true, text: 'PO4 / NO3 / KH', color: '#64748b' } },
+                        y1: { type: 'linear', display: true, position: 'right', grid: { drawOnChartArea: false }, ticks: { color: '#c084fc' }, title: { display: true, text: 'Conductivity (µS)', color: '#c084fc' } }
+                    }
+                }
+            });
+        };
+
+        // Modals
+        window.openEntryModal = function(id = null) {
+            document.getElementById('entryId').value = id || '';
+            document.getElementById('modalTitle').innerText = id ? 'Edit Measurement Record' : 'Add Measurement Record';
+            
+            if (id) {
+                const item = window.dataEntries.find(e => e.id === id);
+                if (item) {
+                    document.getElementById('fieldDate').value = item.date || '';
+                    document.getElementById('fieldPo4').value = item.po4 || '';
+                    document.getElementById('fieldNo3').value = item.no3 || '';
+                    document.getElementById('fieldKh').value = item.kh || '';
+                    document.getElementById('fieldLeitwert').value = item.leitwert || '';
+                    document.getElementById('fieldComment').value = item.comment || '';
+                }
+            } else {
+                document.getElementById('entryForm').reset();
+                // Prefill today's date in 'DD MMM' format (e.g., '1 Nov')
+                const today = new Date();
+                const day = today.getDate();
+                const monthStr = today.toLocaleString('default', { month: 'short' });
+                document.getElementById('fieldDate').value = `${day} ${monthStr}`;
+            }
+            document.getElementById('entryModal').classList.remove('hidden');
+        };
+
+        window.closeEntryModal = function() {
+            document.getElementById('entryModal').classList.add('hidden');
+        };
+
+        window.openDriveModal = function() {
+            document.getElementById('driveModal').classList.remove('hidden');
+        };
+
+        window.closeDriveModal = function() {
+            document.getElementById('driveModal').classList.add('hidden');
+        };
+
+        window.openSyncModal = function() {
+            const key = 'LOCAL_SYNC_' + (Math.random().toString(36).substring(2, 8).toUpperCase());
+            document.getElementById('syncIdDisplay').value = key;
+            document.getElementById('syncModal').classList.remove('hidden');
+        };
+
+        window.closeSyncModal = function() {
+            document.getElementById('syncModal').classList.add('hidden');
+        };
+
+        window.copySyncId = function() {
+            const input = document.getElementById('syncIdDisplay');
+            input.select();
+            document.execCommand('copy');
+        };
+
+        window.showSyncStatus = function(msg, isError = false) {
+            const el = document.getElementById('syncStatus');
+            el.classList.remove('hidden', 'text-rose-400', 'text-emerald-400');
+            el.classList.add(isError ? 'text-rose-400' : 'text-emerald-400');
+            el.innerText = msg;
+        };
+
+        window.pushToLocalSync = function() {
+            window.saveLocal();
+            window.showSyncStatus(`Successfully saved dataset to browser memory! (${window.dataEntries.length} items)`);
+        };
+
+        window.pullFromLocalSync = function() {
+            const localCache = localStorage.getItem('aquarium_data_entries');
+            if (localCache) {
+                try {
+                    window.dataEntries = JSON.parse(localCache);
+                    window.renderTable();
+                    window.showSyncStatus(`Loaded ${window.dataEntries.length} records from browser storage!`);
+                } catch (e) {
+                    window.showSyncStatus('Failed to parse cached data.', true);
+                }
+            } else {
+                window.showSyncStatus('No cached dataset found in browser storage.', true);
+            }
+        };
+
+        window.editEntry = function(id) {
+            window.openEntryModal(id);
+        };
+
+        window.deleteEntry = function(id) {
+            window.dataEntries = window.dataEntries.filter(e => e.id !== id);
+            window.renderTable();
+        };
+
+        window.saveEntryForm = function(event) {
+            event.preventDefault();
+            const id = document.getElementById('entryId').value;
+            const newRecord = {
+                id: id || Date.now().toString(),
+                date: document.getElementById('fieldDate').value,
+                po4: document.getElementById('fieldPo4').value,
+                no3: document.getElementById('fieldNo3').value,
+                kh: document.getElementById('fieldKh').value,
+                leitwert: document.getElementById('fieldLeitwert').value,
+                comment: document.getElementById('fieldComment').value
+            };
+
+            if (id) {
+                const idx = window.dataEntries.findIndex(e => e.id === id);
+                if (idx !== -1) window.dataEntries[idx] = newRecord;
+            } else {
+                window.dataEntries.push(newRecord);
+            }
+
+            window.closeEntryModal();
+            window.renderTable();
+        };
+
+        // Export Functions
+        window.exportCSV = function() {
+            let csv = 'Datum,PO4,NO3,KH,Leitwert,Comment\n';
+            window.dataEntries.forEach(e => {
+                csv += `"${e.date || ''}","${e.po4 || ''}","${e.no3 || ''}","${e.kh || ''}","${e.leitwert || ''}","${e.comment || ''}"\n`;
+            });
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'Aquarium_Water_Parameters.csv';
+            a.click();
+        };
+
+        window.exportJSONBackup = function() {
+            const json = JSON.stringify(window.dataEntries, null, 2);
+            const blob = new Blob([json], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'Aquarium_Data_Backup.json';
+            a.click();
+        };
+
+        window.exportApplicationHTML = function() {
+            const html = document.documentElement.outerHTML;
+            const blob = new Blob([html], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'Aquarium_Tracker_App.html';
+            a.click();
+        };
+
+        // Import CSV or JSON File
+        window.handleFileUpload = function(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const content = e.target.result;
+                try {
+                    if (file.name.endsWith('.json')) {
+                        const parsed = JSON.parse(content);
+                        if (Array.isArray(parsed)) {
+                            window.dataEntries = parsed;
+                        }
+                    } else {
+                        const parseCSV = (str) => {
+                            const arr = [];
+                            let quote = false;
+                            let row = [''];
+                            for (let c = 0; c < str.length; c++) {
+                                const cc = str[c], nc = str[c+1];
+                                if (cc === '"') {
+                                    if (quote && nc === '"') { row[row.length - 1] += '"'; c++; }
+                                    else { quote = !quote; }
+                                } else if ((cc === ',' || cc === ';') && !quote) {
+                                    row.push('');
+                                } else if ((cc === '\r' || cc === '\n') && !quote) {
+                                    if (cc === '\r' && nc === '\n') { c++; }
+                                    arr.push(row);
+                                    row = [''];
+                                } else {
+                                    row[row.length - 1] += cc;
+                                }
+                            }
+                            if (row.length > 1 || row[0] !== '') arr.push(row);
+                            return arr;
+                        };
+
+                        const rows = parseCSV(content);
+                        if (rows.length > 0) {
+                            const newEntries = [];
+                            let startIdx = 0;
+                            const firstRow = rows[0].map(c => c.trim().toLowerCase());
+                            if (firstRow.some(col => col.includes('datum') || col.includes('date') || col.includes('po4'))) {
+                                startIdx = 1;
+                            }
+
+                            for (let i = startIdx; i < rows.length; i++) {
+                                const clean = rows[i].map(p => p.trim());
+                                if (clean.length >= 1 && clean.some(cell => cell.length > 0)) {
+                                    newEntries.push({
+                                        id: Date.now().toString() + '_' + i + '_' + Math.random().toString(36).substr(2, 4),
+                                        date: clean[0] || '',
+                                        po4: clean[1] || '',
+                                        no3: clean[2] || '',
+                                        kh: clean[3] || '',
+                                        leitwert: clean[4] || '',
+                                        comment: clean[5] || clean.slice(5).join(' ') || ''
+                                    });
+                                }
+                            }
+
+                            if (newEntries.length > 0) {
+                                window.dataEntries = newEntries;
+                            }
+                        }
+                    }
+                    window.renderTable();
+                    event.target.value = '';
+                } catch (err) {
+                    console.error('Import Error:', err);
+                }
+            };
+            reader.readAsText(file);
+        };
+
+        // Render Immediately
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => window.renderTable());
+        } else {
+            window.renderTable();
+        }
+    </script>
+
+</body></html>
