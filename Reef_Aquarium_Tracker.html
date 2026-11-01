@@ -1,0 +1,1418 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-slate-900 text-slate-100">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ReefKeeper Pro - Aquarium Management</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Inter Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #0f172a; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #475569; }
+    </style>
+</head>
+<body class="h-full flex flex-col md:flex-row overflow-hidden bg-slate-950 text-slate-100">
+
+    <!-- Mobile Header -->
+    <div class="md:hidden flex items-center justify-between p-4 bg-slate-900 border-b border-slate-800">
+        <div class="flex items-center space-x-2">
+            <i data-lucide="waves" class="w-7 h-7 text-cyan-400"></i>
+            <span class="font-bold text-lg tracking-wide bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">ReefKeeper Pro</span>
+        </div>
+        <button id="mobileMenuBtn" class="p-2 text-slate-400 hover:text-white">
+            <i data-lucide="menu" class="w-6 h-6"></i>
+        </button>
+    </div>
+
+    <!-- Sidebar Navigation -->
+    <aside id="sidebar" class="hidden md:flex flex-col w-64 bg-slate-900 border-r border-slate-800 flex-shrink-0 z-20 absolute md:relative inset-y-0 left-0 w-full md:w-64 transition-transform duration-300 transform -translate-x-full md:translate-x-0">
+        <div class="p-6 hidden md:flex items-center space-x-3 border-b border-slate-800/80">
+            <div class="p-2 bg-cyan-500/10 border border-cyan-500/20 rounded-xl">
+                <i data-lucide="waves" class="w-6 h-6 text-cyan-400"></i>
+            </div>
+            <div>
+                <h1 class="font-bold text-lg leading-tight bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">ReefKeeper</h1>
+                <p class="text-xs text-slate-400">Aquarium Suite</p>
+            </div>
+        </div>
+
+        <nav class="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
+            <button onclick="switchTab('dashboard')" class="nav-btn w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-medium transition-colors bg-cyan-500/10 text-cyan-400 border border-cyan-500/20" data-tab="dashboard">
+                <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
+                <span>Dashboard</span>
+            </button>
+            <button onclick="switchTab('log')" class="nav-btn w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-medium text-slate-400 hover:bg-slate-800/60 hover:text-slate-200 transition-colors" data-tab="log">
+                <i data-lucide="clipboard-list" class="w-5 h-5"></i>
+                <span>Parameter Log</span>
+            </button>
+            <button onclick="switchTab('calculator')" class="nav-btn w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-medium text-slate-400 hover:bg-slate-800/60 hover:text-slate-200 transition-colors" data-tab="calculator">
+                <i data-lucide="calculator" class="w-5 h-5"></i>
+                <span>Dosing Calculator</span>
+            </button>
+            <button onclick="switchTab('livestock')" class="nav-btn w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-medium text-slate-400 hover:bg-slate-800/60 hover:text-slate-200 transition-colors" data-tab="livestock">
+                <i data-lucide="fish" class="w-5 h-5"></i>
+                <span>Livestock Log</span>
+            </button>
+            <button onclick="switchTab('tasks')" class="nav-btn w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-medium text-slate-400 hover:bg-slate-800/60 hover:text-slate-200 transition-colors" data-tab="tasks">
+                <i data-lucide="calendar-check" class="w-5 h-5"></i>
+                <span>Maintenance Schedule</span>
+            </button>
+        </nav>
+
+        <!-- System Summary Card in Sidebar -->
+        <div class="p-4 m-4 bg-slate-950/60 rounded-xl border border-slate-800/80 text-xs space-y-2">
+            <div class="flex justify-between items-center">
+                <span class="text-slate-400 font-medium">Tank Volume</span>
+                <span id="sidebarVolumeText" class="text-cyan-400 font-semibold">280 L</span>
+            </div>
+            <!-- Cloud Status Indicator -->
+            <div class="flex justify-between items-center pt-2 border-t border-slate-800/80">
+                <span class="text-slate-400 font-medium flex items-center gap-1.5">
+                    <span id="cloudStatusDot" class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
+                    <span>Cloud Sync</span>
+                </span>
+                <span id="cloudStatusText" class="text-[10px] text-slate-400">Connecting...</span>
+            </div>
+            <button onclick="openSettingsModal()" class="w-full mt-2 py-2 px-3 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs font-medium transition flex items-center justify-center space-x-1 border border-slate-700">
+                <i data-lucide="settings" class="w-3.5 h-3.5"></i>
+                <span>Tank Settings</span>
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 flex flex-col min-w-0 overflow-y-auto bg-slate-950">
+        
+        <!-- Header Bar -->
+        <header class="hidden md:flex items-center justify-between px-8 py-5 border-b border-slate-800/80 bg-slate-900/40 backdrop-blur">
+            <div>
+                <h2 id="pageTitle" class="text-xl font-bold text-slate-100">Dashboard Overview</h2>
+                <p id="pageSubtitle" class="text-xs text-slate-400">Current status and historical trends</p>
+            </div>
+            <div class="flex items-center space-x-3">
+                <button onclick="openLogModal()" class="flex items-center space-x-2 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white px-4 py-2 rounded-xl font-medium text-sm transition shadow-lg shadow-cyan-500/10">
+                    <i data-lucide="plus" class="w-4 h-4"></i>
+                    <span>Log Test Results</span>
+                </button>
+            </div>
+        </header>
+
+        <div class="p-4 md:p-8 space-y-6 max-w-7xl mx-auto w-full">
+
+            <!-- TAB 1: DASHBOARD -->
+            <section id="tab-dashboard" class="tab-content space-y-6">
+                <!-- Overview Metric Cards -->
+                <div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4" id="metricCards">
+                    <!-- Dynamically populated via JS -->
+                </div>
+
+                <!-- Main Chart Section -->
+                <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-5 md:p-6 shadow-xl">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+                        <div>
+                            <h3 class="font-semibold text-lg text-slate-100">Parameter Trends</h3>
+                            <p class="text-xs text-slate-400">Historical performance over time</p>
+                        </div>
+                        <div class="flex flex-wrap items-center gap-2">
+                            <select id="chartParamSelect" onchange="updateChart()" class="bg-slate-800 border border-slate-700 text-sm text-slate-200 rounded-xl px-3 py-2 outline-none focus:border-cyan-500">
+                                <option value="nitrate">Nitrate (ppm)</option>
+                                <option value="phosphate">Phosphate (ppm)</option>
+                                <option value="alkalinity">Alkalinity (dKH)</option>
+                                <option value="calcium">Calcium (ppm)</option>
+                                <option value="magnesium">Magnesium (ppm)</option>
+                                <option value="salinity">Salinity (SG)</option>
+                                <option value="ph">pH</option>
+                                <option value="temp">Temperature (°C)</option>
+                            </select>
+                            <select id="chartTimeframeSelect" onchange="updateChart()" class="bg-slate-800 border border-slate-700 text-sm text-slate-200 rounded-xl px-3 py-2 outline-none focus:border-cyan-500">
+                                <option value="7">Last 7 Days</option>
+                                <option value="30">Last 30 Days</option>
+                                <option value="90">Last 90 Days</option>
+                                <option value="365" selected>All Time</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="relative h-72 sm:h-80 w-full">
+                        <canvas id="paramChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Recent Activity & Quick Action Row -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- Upcoming Maintenance Quick View -->
+                    <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-5 shadow-xl lg:col-span-1 flex flex-col justify-between">
+                        <div>
+                            <div class="flex items-center justify-between mb-4">
+                                <h3 class="font-semibold text-slate-100 flex items-center space-x-2">
+                                    <i data-lucide="clock" class="w-4 h-4 text-cyan-400"></i>
+                                    <span>Pending Tasks</span>
+                                </h3>
+                                <button onclick="switchTab('tasks')" class="text-xs text-cyan-400 hover:underline">View All</button>
+                            </div>
+                            <div id="dashboardTasksList" class="space-y-3">
+                                <!-- Populated dynamically -->
+                            </div>
+                        </div>
+                        <button onclick="openTaskModal()" class="mt-4 w-full py-2.5 border border-dashed border-slate-700 hover:border-slate-500 text-slate-400 hover:text-slate-200 text-xs font-medium rounded-xl transition flex items-center justify-center space-x-2">
+                            <i data-lucide="plus" class="w-4 h-4"></i>
+                            <span>Add Maintenance Task</span>
+                        </button>
+                    </div>
+
+                    <!-- Target Parameter Reference Table -->
+                    <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-5 shadow-xl lg:col-span-2">
+                        <h3 class="font-semibold text-slate-100 mb-1 flex items-center space-x-2">
+                            <i data-lucide="target" class="w-4 h-4 text-emerald-400"></i>
+                            <span>Ideal Reef Parameter Targets</span>
+                        </h3>
+                        <p class="text-xs text-slate-400 mb-4">Recommended ranges for healthy coral growth and stability</p>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-xs text-slate-300">
+                                <thead class="bg-slate-800/60 text-slate-400 uppercase tracking-wider">
+                                    <tr>
+                                        <th class="p-2.5 rounded-l-lg">Parameter</th>
+                                        <th class="p-2.5">Soft/LPS Reef</th>
+                                        <th class="p-2.5">SPS Dominant</th>
+                                        <th class="p-2.5 rounded-r-lg">Natural Seawater</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-800/60">
+                                    <tr>
+                                        <td class="p-2.5 font-medium text-slate-200">Nitrate</td>
+                                        <td class="p-2.5 text-slate-400">5 - 15 ppm</td>
+                                        <td class="p-2.5 text-slate-400">2 - 10 ppm</td>
+                                        <td class="p-2.5 text-cyan-400 font-mono">&lt; 0.1 ppm</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="p-2.5 font-medium text-slate-200">Phosphate</td>
+                                        <td class="p-2.5 text-slate-400">0.03 - 0.10 ppm</td>
+                                        <td class="p-2.5 text-slate-400">0.02 - 0.05 ppm</td>
+                                        <td class="p-2.5 text-cyan-400 font-mono">0.005 ppm</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="p-2.5 font-medium text-slate-200">Alkalinity</td>
+                                        <td class="p-2.5 text-slate-400">8.0 - 10.0 dKH</td>
+                                        <td class="p-2.5 text-slate-400">7.5 - 8.5 dKH</td>
+                                        <td class="p-2.5 text-cyan-400 font-mono">7.0 dKH</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="p-2.5 font-medium text-slate-200">Calcium</td>
+                                        <td class="p-2.5 text-slate-400">400 - 450 ppm</td>
+                                        <td class="p-2.5 text-slate-400">420 - 460 ppm</td>
+                                        <td class="p-2.5 text-cyan-400 font-mono">420 ppm</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="p-2.5 font-medium text-slate-200">Magnesium</td>
+                                        <td class="p-2.5 text-slate-400">1250 - 1350 ppm</td>
+                                        <td class="p-2.5 text-slate-400">1350 - 1450 ppm</td>
+                                        <td class="p-2.5 text-cyan-400 font-mono">1280 ppm</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="p-2.5 font-medium text-slate-200">Salinity</td>
+                                        <td class="p-2.5 text-slate-400">1.024 - 1.026</td>
+                                        <td class="p-2.5 text-slate-400">1.025 - 1.026</td>
+                                        <td class="p-2.5 text-cyan-400 font-mono">1.026 SG</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 2: PARAMETER LOG TABLE -->
+            <section id="tab-log" class="tab-content space-y-6 hidden">
+                <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 shadow-xl">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+                        <div>
+                            <h3 class="text-lg font-semibold text-slate-100">Historical Test Log</h3>
+                            <p class="text-xs text-slate-400">All recorded water parameter measurements</p>
+                        </div>
+                        <div class="flex items-center space-x-3 w-full sm:w-auto">
+                            <button onclick="openLogModal()" class="w-full sm:w-auto bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-semibold px-4 py-2 rounded-xl text-sm transition flex items-center justify-center space-x-2">
+                                <i data-lucide="plus" class="w-4 h-4"></i>
+                                <span>Add Entry</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-sm text-slate-300">
+                            <thead class="bg-slate-800/80 text-slate-400 uppercase text-xs tracking-wider">
+                                <tr>
+                                    <th class="p-3.5 rounded-l-xl">Date / Time</th>
+                                    <th class="p-3.5">NO3 (ppm)</th>
+                                    <th class="p-3.5">PO4 (ppm)</th>
+                                    <th class="p-3.5">Alk (dKH)</th>
+                                    <th class="p-3.5">Ca (ppm)</th>
+                                    <th class="p-3.5">Mg (ppm)</th>
+                                    <th class="p-3.5">Salinity</th>
+                                    <th class="p-3.5">pH</th>
+                                    <th class="p-3.5">Notes</th>
+                                    <th class="p-3.5 rounded-r-xl text-right">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="logTableBody" class="divide-y divide-slate-800/50">
+                                <!-- Dynamic rows -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 3: DOSING CALCULATOR -->
+            <section id="tab-calculator" class="tab-content space-y-6 hidden">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- Calculator Form -->
+                    <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 shadow-xl lg:col-span-1 space-y-4">
+                        <h3 class="text-lg font-semibold text-slate-100 flex items-center space-x-2">
+                            <i data-lucide="flask-conical" class="w-5 h-5 text-cyan-400"></i>
+                            <span>Dosing Adjustment</span>
+                        </h3>
+                        <p class="text-xs text-slate-400">Calculate exact chemical dosages required to adjust your water chemistry.</p>
+                        
+                        <div class="space-y-4 pt-2">
+                            <div>
+                                <label class="block text-xs font-medium text-slate-400 mb-1">Target Element</label>
+                                <select id="calcElement" class="w-full bg-slate-800 border border-slate-700 text-sm text-slate-100 rounded-xl p-3 outline-none focus:border-cyan-500" onchange="calculateDose()">
+                                    <option value="alk">Alkalinity (dKH)</option>
+                                    <option value="ca">Calcium (ppm)</option>
+                                    <option value="mg">Magnesium (ppm)</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-medium text-slate-400 mb-1">Additive Brand / Type</label>
+                                <select id="calcBrand" class="w-full bg-slate-800 border border-slate-700 text-sm text-slate-100 rounded-xl p-3 outline-none focus:border-cyan-500" onchange="calculateDose()">
+                                    <!-- Dynamic options -->
+                                </select>
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block text-xs font-medium text-slate-400 mb-1">Current Level</label>
+                                    <input type="number" id="calcCurrent" step="0.1" value="7.5" class="w-full bg-slate-800 border border-slate-700 text-sm text-slate-100 rounded-xl p-3 outline-none focus:border-cyan-500" oninput="calculateDose()">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-slate-400 mb-1">Desired Level</label>
+                                    <input type="number" id="calcDesired" step="0.1" value="8.5" class="w-full bg-slate-800 border border-slate-700 text-sm text-slate-100 rounded-xl p-3 outline-none focus:border-cyan-500" oninput="calculateDose()">
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-medium text-slate-400 mb-1">System Water Volume (Liters)</label>
+                                <input type="number" id="calcVolume" value="280" class="w-full bg-slate-800 border border-slate-700 text-sm text-slate-100 rounded-xl p-3 outline-none focus:border-cyan-500" oninput="calculateDose()">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Calculator Results Output -->
+                    <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 shadow-xl lg:col-span-2 flex flex-col justify-between">
+                        <div>
+                            <h3 class="text-lg font-semibold text-slate-100 mb-1">Recommended Dosage</h3>
+                            <p class="text-xs text-slate-400 mb-6">Safe adjustment instructions and dosing guidance</p>
+
+                            <div class="bg-gradient-to-br from-slate-800/80 to-slate-900 border border-slate-700/60 rounded-2xl p-6 text-center mb-6">
+                                <span class="text-xs uppercase tracking-wider text-slate-400 font-semibold block mb-1">Total Dose Required</span>
+                                <div class="text-4xl md:text-5xl font-extrabold text-cyan-400 mb-2" id="calcResultAmount">0 ml</div>
+                                <p class="text-sm text-slate-300" id="calcResultNote">Select options to see calculations</p>
+                            </div>
+
+                            <!-- Safety Banner -->
+                            <div class="space-y-3">
+                                <div class="p-4 bg-amber-500/10 border border-amber-500/20 rounded-xl flex items-start space-x-3">
+                                    <i data-lucide="alert-triangle" class="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5"></i>
+                                    <div class="text-xs text-amber-200/90 leading-relaxed">
+                                        <strong class="font-semibold block mb-0.5">Dosing Safety Rules:</strong>
+                                        <span id="calcSafetyGuide">Do not raise Alkalinity by more than 1.4 dKH per day. Spread doses evenly across 24 hours if using an automated dosing pump.</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Quick Guide -->
+                        <div class="mt-6 pt-4 border-t border-slate-800 grid grid-cols-3 gap-2 text-center text-xs">
+                            <div class="p-3 bg-slate-800/40 rounded-xl">
+                                <span class="block text-slate-400">Target Range</span>
+                                <span class="font-semibold text-slate-200 mt-1 block" id="calcTargetRange">8.0 - 9.0 dKH</span>
+                            </div>
+                            <div class="p-3 bg-slate-800/40 rounded-xl">
+                                <span class="block text-slate-400">Max Daily Shift</span>
+                                <span class="font-semibold text-slate-200 mt-1 block" id="calcMaxShift">1.4 dKH</span>
+                            </div>
+                            <div class="p-3 bg-slate-800/40 rounded-xl">
+                                <span class="block text-slate-400">Ratio Check</span>
+                                <span class="font-semibold text-slate-200 mt-1 block">Balanced</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 4: LIVESTOCK MANAGER -->
+            <section id="tab-livestock" class="tab-content space-y-6 hidden">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                    <div>
+                        <h3 class="text-lg font-semibold text-slate-100">Tank Inhabitants</h3>
+                        <p class="text-xs text-slate-400">Inventory of corals, fish, and invertebrates</p>
+                    </div>
+                    <button onclick="openLivestockModal()" class="bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-semibold px-4 py-2 rounded-xl text-sm transition flex items-center space-x-2">
+                        <i data-lucide="plus" class="w-4 h-4"></i>
+                        <span>Add Livestock</span>
+                    </button>
+                </div>
+
+                <!-- Category Filters -->
+                <div class="flex space-x-2 border-b border-slate-800 pb-3">
+                    <button onclick="filterLivestock('all')" class="ls-filter-btn px-3 py-1.5 rounded-lg text-xs font-medium bg-cyan-500/10 text-cyan-400 border border-cyan-500/20" data-cat="all">All</button>
+                    <button onclick="filterLivestock('coral')" class="ls-filter-btn px-3 py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:text-slate-200" data-cat="coral">Corals</button>
+                    <button onclick="filterLivestock('fish')" class="ls-filter-btn px-3 py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:text-slate-200" data-cat="fish">Fish</button>
+                    <button onclick="filterLivestock('invert')" class="ls-filter-btn px-3 py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:text-slate-200" data-cat="invert">Inverts</button>
+                </div>
+
+                <!-- Grid of Livestock Cards -->
+                <div id="livestockGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <!-- Dynamic livestock cards -->
+                </div>
+            </section>
+
+            <!-- TAB 5: MAINTENANCE SCHEDULE -->
+            <section id="tab-tasks" class="tab-content space-y-6 hidden">
+                <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 shadow-xl">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+                        <div>
+                            <h3 class="text-lg font-semibold text-slate-100">Routine Maintenance</h3>
+                            <p class="text-xs text-slate-400">Schedule water changes, media replacements, and equipment checks</p>
+                        </div>
+                        <button onclick="openTaskModal()" class="bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-semibold px-4 py-2 rounded-xl text-sm transition flex items-center space-x-2">
+                            <i data-lucide="plus" class="w-4 h-4"></i>
+                            <span>New Task</span>
+                        </button>
+                    </div>
+
+                    <div id="fullTasksList" class="space-y-3">
+                        <!-- Dynamic list -->
+                    </div>
+                </div>
+            </section>
+
+        </div>
+    </main>
+
+    <!-- MODAL: ADD / EDIT LOG ENTRY -->
+    <div id="logModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-xl max-h-[90vh] overflow-y-auto p-6 shadow-2xl space-y-5">
+            <div class="flex justify-between items-center border-b border-slate-800 pb-4">
+                <h3 class="text-lg font-bold text-slate-100" id="logModalTitle">Log Water Parameters</h3>
+                <button onclick="closeLogModal()" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+
+            <form id="logForm" onsubmit="saveLogEntry(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-medium text-slate-400 mb-1">Date & Time</label>
+                    <input type="datetime-local" id="logDateTime" required class="w-full bg-slate-800 border border-slate-700 text-sm text-slate-100 rounded-xl p-3 outline-none focus:border-cyan-500">
+                </div>
+
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-400 mb-1">Nitrate (ppm)</label>
+                        <input type="number" step="0.1" id="logNO3" placeholder="5.0" class="w-full bg-slate-800 border border-slate-700 text-sm text-slate-100 rounded-xl p-2.5 outline-none focus:border-cyan-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-400 mb-1">Phos (ppm)</label>
+                        <input type="number" step="0.01" id="logPO4" placeholder="0.03" class="w-full bg-slate-800 border border-slate-700 text-sm text-slate-100 rounded-xl p-2.5 outline-none focus:border-cyan-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-400 mb-1">Alk (dKH)</label>
+                        <input type="number" step="0.1" id="logAlk" placeholder="8.3" class="w-full bg-slate-800 border border-slate-700 text-sm text-slate-100 rounded-xl p-2.5 outline-none focus:border-cyan-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-400 mb-1">Calcium (ppm)</label>
+                        <input type="number" id="logCa" placeholder="420" class="w-full bg-slate-800 border border-slate-700 text-sm text-slate-100 rounded-xl p-2.5 outline-none focus:border-cyan-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-400 mb-1">Mag (ppm)</label>
+                        <input type="number" id="logMg" placeholder="1350" class="w-full bg-slate-800 border border-slate-700 text-sm text-slate-100 rounded-xl p-2.5 outline-none focus:border-cyan-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-400 mb-1">Salinity (SG)</label>
+                        <input type="number" step="0.001" id="logSalinity" placeholder="1.026" class="w-full bg-slate-800 border border-slate-700 text-sm text-slate-100 rounded-xl p-2.5 outline-none focus:border-cyan-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-400 mb-1">pH</label>
+                        <input type="number" step="0.01" id="logPH" placeholder="8.2" class="w-full bg-slate-800 border border-slate-700 text-sm text-slate-100 rounded-xl p-2.5 outline-none focus:border-cyan-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-400 mb-1">Temp (°C)</label>
+                        <input type="number" step="0.1" id="logTemp" placeholder="25.5" class="w-full bg-slate-800 border border-slate-700 text-sm text-slate-100 rounded-xl p-2.5 outline-none focus:border-cyan-500">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-medium text-slate-400 mb-1">Notes / Observations</label>
+                    <textarea id="logNotes" rows="2" placeholder="e.g. Cleaned skimmer, added NO3 dose..." class="w-full bg-slate-800 border border-slate-700 text-sm text-slate-100 rounded-xl p-3 outline-none focus:border-cyan-500"></textarea>
+                </div>
+
+                <div class="flex justify-end space-x-3 pt-2">
+                    <button type="button" onclick="closeLogModal()" class="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-sm font-medium transition">Cancel</button>
+                    <button type="submit" class="px-5 py-2.5 bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-semibold rounded-xl text-sm transition">Save Measurement</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: ADD LIVESTOCK -->
+    <div id="livestockModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md p-6 shadow-2xl space-y-4">
+            <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+                <h3 class="text-lg font-bold text-slate-100">Add Livestock</h3>
+                <button onclick="closeLivestockModal()" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+
+            <form id="livestockForm" onsubmit="saveLivestockEntry(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-medium text-slate-400 mb-1">Name / Species</label>
+                    <input type="text" id="lsName" required placeholder="e.g. Torch Coral, Purple Tang" class="w-full bg-slate-800 border border-slate-700 text-sm text-slate-100 rounded-xl p-3 outline-none focus:border-cyan-500">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-medium text-slate-400 mb-1">Category</label>
+                    <select id="lsCategory" class="w-full bg-slate-800 border border-slate-700 text-sm text-slate-100 rounded-xl p-3 outline-none focus:border-cyan-500">
+                        <option value="coral">Coral (LPS/SPS/Soft)</option>
+                        <option value="fish">Fish</option>
+                        <option value="invert">Invertebrate / CUC</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-medium text-slate-400 mb-1">Acquisition Date</label>
+                    <input type="date" id="lsDate" required class="w-full bg-slate-800 border border-slate-700 text-sm text-slate-100 rounded-xl p-3 outline-none focus:border-cyan-500">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-medium text-slate-400 mb-1">Placement / Location in Tank</label>
+                    <input type="text" id="lsLocation" placeholder="e.g. Lower Rockwork Left, Sandbed" class="w-full bg-slate-800 border border-slate-700 text-sm text-slate-100 rounded-xl p-3 outline-none focus:border-cyan-500">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-medium text-slate-400 mb-1">Notes / Health History</label>
+                    <textarea id="lsNotes" rows="2" placeholder="e.g. Dipped in Coral Rx before introducing..." class="w-full bg-slate-800 border border-slate-700 text-sm text-slate-100 rounded-xl p-3 outline-none focus:border-cyan-500"></textarea>
+                </div>
+
+                <div class="flex justify-end space-x-3 pt-2">
+                    <button type="button" onclick="closeLivestockModal()" class="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-sm font-medium transition">Cancel</button>
+                    <button type="submit" class="px-5 py-2.5 bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-semibold rounded-xl text-sm transition">Add to Inventory</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: ADD TASK -->
+    <div id="taskModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md p-6 shadow-2xl space-y-4">
+            <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+                <h3 class="text-lg font-bold text-slate-100">Schedule Task</h3>
+                <button onclick="closeTaskModal()" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+
+            <form id="taskForm" onsubmit="saveTaskEntry(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-medium text-slate-400 mb-1">Task Title</label>
+                    <input type="text" id="taskTitle" required placeholder="e.g. 10% Water Change, Change Filter Socks" class="w-full bg-slate-800 border border-slate-700 text-sm text-slate-100 rounded-xl p-3 outline-none focus:border-cyan-500">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-medium text-slate-400 mb-1">Frequency</label>
+                    <select id="taskFreq" class="w-full bg-slate-800 border border-slate-700 text-sm text-slate-100 rounded-xl p-3 outline-none focus:border-cyan-500">
+                        <option value="once">One-time</option>
+                        <option value="weekly">Weekly</option>
+                        <option value="biweekly">Bi-weekly</option>
+                        <option value="monthly">Monthly</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-medium text-slate-400 mb-1">Due Date</label>
+                    <input type="date" id="taskDueDate" required class="w-full bg-slate-800 border border-slate-700 text-sm text-slate-100 rounded-xl p-3 outline-none focus:border-cyan-500">
+                </div>
+
+                <div class="flex justify-end space-x-3 pt-2">
+                    <button type="button" onclick="closeTaskModal()" class="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-sm font-medium transition">Cancel</button>
+                    <button type="submit" class="px-5 py-2.5 bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-semibold rounded-xl text-sm transition">Schedule</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: TANK SETTINGS -->
+    <div id="settingsModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md p-6 shadow-2xl space-y-4">
+            <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+                <h3 class="text-lg font-bold text-slate-100">Aquarium Configuration</h3>
+                <button onclick="closeSettingsModal()" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+
+            <form id="settingsForm" onsubmit="saveSettings(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-medium text-slate-400 mb-1">Total System Volume (Liters)</label>
+                    <input type="number" id="settingVolume" required class="w-full bg-slate-800 border border-slate-700 text-sm text-slate-100 rounded-xl p-3 outline-none focus:border-cyan-500">
+                </div>
+
+                <div class="pt-2 border-t border-slate-800 space-y-2">
+                    <span class="block text-xs font-medium text-slate-400">Cloud Sync & Persistence</span>
+                    <div class="flex gap-2">
+                        <button type="button" onclick="syncLocalToCloud()" class="flex-1 py-2 px-3 bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 text-xs rounded-xl font-medium transition flex items-center justify-center space-x-1">
+                            <i data-lucide="cloud-upload" class="w-3.5 h-3.5"></i>
+                            <span>Sync to Cloud</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="pt-2 border-t border-slate-800 space-y-2">
+                    <span class="block text-xs font-medium text-slate-400">File Backup & Restore</span>
+                    <div class="flex gap-2">
+                        <button type="button" onclick="exportData()" class="flex-1 py-2 px-3 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs rounded-xl border border-slate-700 transition flex items-center justify-center space-x-1">
+                            <i data-lucide="download" class="w-3.5 h-3.5"></i>
+                            <span>Export JSON</span>
+                        </button>
+                        <button type="button" onclick="document.getElementById('importFile').click()" class="flex-1 py-2 px-3 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs rounded-xl border border-slate-700 transition flex items-center justify-center space-x-1">
+                            <i data-lucide="upload" class="w-3.5 h-3.5"></i>
+                            <span>Import JSON</span>
+                        </button>
+                        <input type="file" id="importFile" class="hidden" accept=".json" onchange="importData(event)">
+                    </div>
+                </div>
+
+                <div class="flex justify-end space-x-3 pt-3">
+                    <button type="button" onclick="closeSettingsModal()" class="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-sm font-medium transition">Cancel</button>
+                    <button type="submit" class="px-5 py-2.5 bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-semibold rounded-xl text-sm transition">Save Settings</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MAIN APP SCRIPT -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Global variables provided by environment or default fallbacks
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'reef-keeper-app';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
+            apiKey: "demo-api-key",
+            authDomain: "demo-app.firebaseapp.com",
+            projectId: "demo-app",
+            storageBucket: "demo-app.appspot.com",
+            messagingSenderId: "123456789",
+            appId: "1:123456789:web:demo"
+        };
+
+        const firebaseApp = initializeApp(firebaseConfig);
+        const auth = getAuth(firebaseApp);
+        const db = getFirestore(firebaseApp);
+
+        let isCloudSynced = false;
+
+        async function initCloudSync() {
+            try {
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+
+                const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'tank_state', 'main');
+
+                // Realtime sync from cloud
+                onSnapshot(docRef, (docSnap) => {
+                    if (docSnap.exists()) {
+                        const cloudData = docSnap.data();
+                        if (cloudData && cloudData.logs) {
+                            appState = cloudData;
+                            localStorage.setItem('reef_keeper_data', JSON.stringify(appState));
+                            window.initAppUI();
+                        }
+                    } else {
+                        // First time: initialize cloud with local state
+                        syncLocalToCloud();
+                    }
+                    setCloudStatus(true);
+                }, (error) => {
+                    console.warn("Cloud sync listening error:", error);
+                    setCloudStatus(false);
+                });
+
+            } catch (err) {
+                console.warn("Cloud authentication or sync failed:", err);
+                setCloudStatus(false);
+            }
+        }
+
+        async function syncLocalToCloud() {
+            if (!auth.currentUser) return;
+            try {
+                const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'tank_state', 'main');
+                await setDoc(docRef, appState);
+                setCloudStatus(true);
+            } catch (err) {
+                console.error("Failed to push data to cloud:", err);
+                setCloudStatus(false);
+            }
+        }
+
+        function setCloudStatus(online) {
+            isCloudSynced = online;
+            const dot = document.getElementById('cloudStatusDot');
+            const text = document.getElementById('cloudStatusText');
+            if (!dot || !text) return;
+
+            if (online) {
+                dot.className = "w-2 h-2 rounded-full bg-emerald-400";
+                text.textContent = "Synced";
+                text.className = "text-[10px] text-emerald-400 font-medium";
+            } else {
+                dot.className = "w-2 h-2 rounded-full bg-amber-400";
+                text.textContent = "Local Only";
+                text.className = "text-[10px] text-amber-400 font-medium";
+            }
+        }
+
+        window.syncLocalToCloud = syncLocalToCloud;
+        window.initCloudSync = initCloudSync;
+    </script>
+
+    <script>
+        // Parameter targets and configuration (NO3 and PO4 placed first)
+        const PARAM_CONFIG = {
+            nitrate: { name: 'Nitrate', min: 2.0, max: 12.0, unit: 'ppm', step: 0.1, icon: 'activity', color: '#10b981' },
+            phosphate: { name: 'Phosphate', min: 0.02, max: 0.08, unit: 'ppm', step: 0.01, icon: 'sparkles', color: '#f59e0b' },
+            alkalinity: { name: 'Alkalinity', min: 7.8, max: 9.5, unit: 'dKH', step: 0.1, icon: 'test-tube', color: '#3b82f6' },
+            calcium: { name: 'Calcium', min: 400, max: 460, unit: 'ppm', step: 5, icon: 'shield', color: '#8b5cf6' },
+            magnesium: { name: 'Magnesium', min: 1280, max: 1450, unit: 'ppm', step: 10, icon: 'box', color: '#a855f7' },
+            salinity: { name: 'Salinity', min: 1.024, max: 1.026, unit: 'SG', step: 0.001, icon: 'droplet', color: '#06b6d4' },
+            ph: { name: 'pH', min: 8.1, max: 8.4, unit: 'pH', step: 0.05, icon: 'gauge', color: '#ec4899' },
+            temp: { name: 'Temperature', min: 25.0, max: 26.5, unit: '°C', step: 0.1, icon: 'thermometer', color: '#ef4444' }
+        };
+
+        // Dosing Formulas (ml required per unit change per Liter)
+        const DOSING_PRODUCTS = {
+            alk: [
+                { id: 'soda_ash', name: 'Sodium Carbonate (Soda Ash - Liquid Solution)', factor: 0.132, maxShift: 1.4 },
+                { id: 'baking_soda', name: 'Sodium Bicarbonate (Baking Soda)', factor: 0.158, maxShift: 1.4 },
+                { id: 'brs_alk', name: 'BRS Pharma Alkalinity Solution', factor: 0.132, maxShift: 1.4 }
+            ],
+            ca: [
+                { id: 'calcium_chloride', name: 'Calcium Chloride (Liquid Solution)', factor: 0.002, maxShift: 50 },
+                { id: 'brs_ca', name: 'BRS Pharma Calcium Solution', factor: 0.002, maxShift: 50 }
+            ],
+            mg: [
+                { id: 'mag_mix', name: 'Magnesium Chloride / Sulfate Solution', factor: 0.0076, maxShift: 100 },
+                { id: 'brs_mg', name: 'BRS Pharma Magnesium Solution', factor: 0.0076, maxShift: 100 }
+            ]
+        };
+
+        // Application State
+        let appState = {
+            settings: { volumeLiters: 280 },
+            logs: [
+                { id: '1', timestamp: '2026-05-12T10:00', nitrate: 13.47, phosphate: 0.06, alkalinity: 5.0, calcium: null, magnesium: null, salinity: null, ph: null, temp: null, notes: '' },
+                { id: '2', timestamp: '2026-05-13T10:00', nitrate: null, phosphate: 0.06, alkalinity: null, calcium: null, magnesium: null, salinity: null, ph: null, temp: null, notes: 'Removed PO4 absorber' },
+                { id: '3', timestamp: '2026-05-14T10:00', nitrate: null, phosphate: 0.11, alkalinity: null, calcium: null, magnesium: null, salinity: null, ph: null, temp: null, notes: '' },
+                { id: '4', timestamp: '2026-05-15T10:00', nitrate: 0.07, phosphate: null, alkalinity: null, calcium: null, magnesium: null, salinity: null, ph: null, temp: null, notes: '' },
+                { id: '5', timestamp: '2026-05-16T10:00', nitrate: null, phosphate: 0.06, alkalinity: null, calcium: null, magnesium: null, salinity: null, ph: null, temp: null, notes: '' },
+                { id: '6', timestamp: '2026-05-17T10:00', nitrate: null, phosphate: 0.08, alkalinity: null, calcium: null, magnesium: null, salinity: null, ph: null, temp: null, notes: '' },
+                { id: '7', timestamp: '2026-05-18T10:00', nitrate: null, phosphate: 0.06, alkalinity: null, calcium: null, magnesium: null, salinity: null, ph: null, temp: null, notes: '' },
+                { id: '8', timestamp: '2026-05-19T10:00', nitrate: null, phosphate: 0.08, alkalinity: null, calcium: null, magnesium: null, salinity: null, ph: null, temp: null, notes: '' },
+                { id: '9', timestamp: '2026-05-20T10:00', nitrate: null, phosphate: 0.06, alkalinity: null, calcium: null, magnesium: null, salinity: null, ph: null, temp: null, notes: '' },
+                { id: '10', timestamp: '2026-05-21T10:00', nitrate: 10.9, phosphate: 0.03, alkalinity: null, calcium: null, magnesium: null, salinity: null, ph: null, temp: null, notes: '' },
+                { id: '11', timestamp: '2026-06-14T10:00', nitrate: 29.8, phosphate: 0.07, alkalinity: 7.3, calcium: 415, magnesium: 1320, salinity: null, ph: null, temp: null, notes: 'Osmosewasser NO3 2.9 ppm' },
+                { id: '12', timestamp: '2026-06-24T10:00', nitrate: 34.6, phosphate: 0.13, alkalinity: null, calcium: null, magnesium: null, salinity: null, ph: null, temp: null, notes: 'RO Water 0.0ppm. Added PO4 Out resin' },
+                { id: '13', timestamp: '2026-06-25T10:00', nitrate: null, phosphate: 0.17, alkalinity: null, calcium: null, magnesium: null, salinity: null, ph: null, temp: null, notes: '' },
+                { id: '14', timestamp: '2026-06-26T10:00', nitrate: null, phosphate: 0.15, alkalinity: null, calcium: null, magnesium: null, salinity: null, ph: null, temp: null, notes: 'Add PO4 Absorber' },
+                { id: '15', timestamp: '2026-06-27T10:00', nitrate: null, phosphate: 0.08, alkalinity: null, calcium: null, magnesium: null, salinity: null, ph: null, temp: null, notes: '' },
+                { id: '16', timestamp: '2026-06-28T10:00', nitrate: null, phosphate: 0.08, alkalinity: 6.4, calcium: null, magnesium: null, salinity: null, ph: null, temp: null, notes: 'Osmose Wasser 0.0mg PO4' },
+                { id: '17', timestamp: '2026-06-29T10:00', nitrate: null, phosphate: 0.12, alkalinity: null, calcium: null, magnesium: null, salinity: null, ph: null, temp: null, notes: '' },
+                { id: '18', timestamp: '2026-06-30T10:00', nitrate: null, phosphate: 0.06, alkalinity: null, calcium: null, magnesium: null, salinity: null, ph: null, temp: null, notes: '' },
+                { id: '19', timestamp: '2026-07-01T10:00', nitrate: 18.6, phosphate: null, alkalinity: null, calcium: null, magnesium: null, salinity: null, ph: null, temp: null, notes: '' },
+                { id: '20', timestamp: '2026-07-03T10:00', nitrate: null, phosphate: 0.04, alkalinity: null, calcium: null, magnesium: null, salinity: null, ph: null, temp: null, notes: '' },
+                { id: '21', timestamp: '2026-07-04T10:00', nitrate: null, phosphate: null, alkalinity: 7.7, calcium: null, magnesium: null, salinity: null, ph: null, temp: null, notes: '' },
+                { id: '22', timestamp: '2026-07-09T10:00', nitrate: 10.1, phosphate: 0.00, alkalinity: 8.3, calcium: null, magnesium: null, salinity: null, ph: null, temp: null, notes: '' },
+                { id: '23', timestamp: '2026-07-18T10:00', nitrate: 9.2, phosphate: 0.06, alkalinity: 7.3, calcium: 405, magnesium: 1320, salinity: null, ph: null, temp: null, notes: '8.4ml KH/Tag' },
+                { id: '24', timestamp: '2026-07-29T10:00', nitrate: 6.4, phosphate: 0.07, alkalinity: 10.3, calcium: null, magnesium: null, salinity: null, ph: null, temp: null, notes: '0.0ml KH/Tag' },
+                { id: '25', timestamp: '2026-08-02T10:00', nitrate: 3.5, phosphate: 0.03, alkalinity: 9.4, calcium: null, magnesium: null, salinity: null, ph: null, temp: null, notes: '' },
+                { id: '26', timestamp: '2026-08-04T10:00', nitrate: null, phosphate: 0.09, alkalinity: 8.4, calcium: null, magnesium: null, salinity: null, ph: null, temp: null, notes: '' },
+                { id: '27', timestamp: '2026-08-06T10:00', nitrate: null, phosphate: null, alkalinity: 8.7, calcium: null, magnesium: null, salinity: null, ph: null, temp: null, notes: '' },
+                { id: '28', timestamp: '2026-08-09T10:00', nitrate: 8.4, phosphate: 0.07, alkalinity: 8.5, calcium: null, magnesium: null, salinity: null, ph: null, temp: null, notes: '' },
+                { id: '29', timestamp: '2026-08-12T10:00', nitrate: 1.0, phosphate: 0.00, alkalinity: 8.1, calcium: null, magnesium: null, salinity: null, ph: null, temp: null, notes: '' },
+                { id: '30', timestamp: '2026-08-22T10:00', nitrate: null, phosphate: null, alkalinity: 8.0, calcium: null, magnesium: null, salinity: null, ph: null, temp: null, notes: '' },
+                { id: '31', timestamp: '2026-08-30T10:00', nitrate: null, phosphate: null, alkalinity: null, calcium: null, magnesium: null, salinity: null, ph: null, temp: null, notes: 'Bor 47ml, Jod 10ml, ZN 1.1ml, MO 2.9ml, V 1.2ml' },
+                { id: '32', timestamp: '2026-08-31T10:00', nitrate: null, phosphate: null, alkalinity: null, calcium: null, magnesium: null, salinity: null, ph: null, temp: null, notes: 'ZN 1.1ml, MO 2.9ml, V 1.2ml' },
+                { id: '33', timestamp: '2026-09-01T10:00', nitrate: null, phosphate: null, alkalinity: null, calcium: null, magnesium: null, salinity: null, ph: null, temp: null, notes: 'V 1.2ml' },
+                { id: '34', timestamp: '2026-09-02T10:00', nitrate: null, phosphate: null, alkalinity: null, calcium: null, magnesium: null, salinity: null, ph: null, temp: null, notes: 'V 1.2ml' },
+                { id: '35', timestamp: '2026-09-04T10:00', nitrate: 1.2, phosphate: 0.03, alkalinity: 7.0, calcium: null, magnesium: null, salinity: null, ph: null, temp: null, notes: '' },
+                { id: '36', timestamp: '2026-09-08T10:00', nitrate: null, phosphate: null, alkalinity: 7.8, calcium: 390, magnesium: 1305, salinity: null, ph: null, temp: null, notes: '' },
+                { id: '37', timestamp: '2026-09-28T10:00', nitrate: 0.0, phosphate: 0.03, alkalinity: 8.1, calcium: null, magnesium: null, salinity: null, ph: null, temp: null, notes: '' },
+                { id: '38', timestamp: '2026-09-30T10:00', nitrate: 0.0, phosphate: 0.01, alkalinity: null, calcium: null, magnesium: null, salinity: null, ph: null, temp: null, notes: '4ml 68g/l NO3 dosiert' },
+                { id: '39', timestamp: '2026-10-01T10:00', nitrate: 0.0, phosphate: null, alkalinity: null, calcium: null, magnesium: null, salinity: null, ph: null, temp: null, notes: '4ml 68g/l NO3 dosiert' },
+                { id: '40', timestamp: '2026-10-03T10:00', nitrate: 0.1, phosphate: null, alkalinity: null, calcium: null, magnesium: null, salinity: null, ph: null, temp: null, notes: '5ml 68g/l NO3 dosiert' },
+                { id: '41', timestamp: '2026-10-04T10:00', nitrate: 2.1, phosphate: null, alkalinity: null, calcium: 345, magnesium: 1350, salinity: null, ph: null, temp: null, notes: '' },
+                { id: '42', timestamp: '2026-10-11T10:00', nitrate: 1.3, phosphate: 0.03, alkalinity: null, calcium: null, magnesium: null, salinity: null, ph: null, temp: null, notes: '' },
+                { id: '43', timestamp: '2026-10-21T10:00', nitrate: 0.7, phosphate: 0.05, alkalinity: null, calcium: null, magnesium: null, salinity: null, ph: null, temp: null, notes: 'Light decreased 10%. Min. NO3 2-5mg, PO4/NO3 1:100' },
+                { id: '44', timestamp: '2026-10-25T10:00', nitrate: null, phosphate: null, alkalinity: null, calcium: null, magnesium: null, salinity: null, ph: null, temp: null, notes: '40l WW' },
+                { id: '45', timestamp: '2026-10-26T10:00', nitrate: 2.1, phosphate: null, alkalinity: null, calcium: null, magnesium: null, salinity: null, ph: null, temp: null, notes: '7ml von 13ml NO3 68ppm dosiert' }
+            ],
+            livestock: [
+                { id: '1', name: 'Green Euphyllia Torch', category: 'coral', date: '2026-02-15', location: 'Mid-Left Rock', notes: 'Healthy extension, feeding twice weekly.' },
+                { id: '2', name: 'Purple Tang', category: 'fish', date: '2026-03-01', location: 'Open Water', notes: 'Active, eats Nori daily.' },
+                { id: '3', name: 'Clean-up Crew Snails (x5)', category: 'invert', date: '2026-01-10', location: 'Glass/Rock', notes: 'Trochus snails keeping glass clean.' }
+            ],
+            tasks: [
+                { id: '1', title: '10% Water Change (28L)', freq: 'weekly', dueDate: '2026-11-02', completed: false },
+                { id: '2', title: 'Replace Filter Socks', freq: 'biweekly', dueDate: '2026-11-01', completed: false },
+                { id: '3', title: 'Clean Protein Skimmer Cup', freq: 'weekly', dueDate: '2026-10-31', completed: true },
+                { id: '4', title: 'Test RO/DI TDS Output', freq: 'monthly', dueDate: '2026-11-15', completed: false }
+            ]
+        };
+
+        let chartInstance = null;
+        let editingLogId = null;
+
+        // Load data from LocalStorage
+        function loadSavedState() {
+            try {
+                const saved = localStorage.getItem('reef_keeper_data');
+                if (saved) {
+                    appState = JSON.parse(saved);
+                }
+            } catch (e) {
+                console.error('Error loading local state:', e);
+            }
+        }
+
+        // Save data to LocalStorage & Cloud
+        function saveState() {
+            try {
+                localStorage.setItem('reef_keeper_data', JSON.stringify(appState));
+                if (window.syncLocalToCloud) {
+                    window.syncLocalToCloud();
+                }
+            } catch (e) {
+                console.error('Save error:', e);
+            }
+        }
+
+        // Navigation
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('bg-cyan-500/10', 'text-cyan-400', 'border', 'border-cyan-500/20');
+                btn.classList.add('text-slate-400');
+            });
+
+            const activeTab = document.getElementById(`tab-${tabId}`);
+            if (activeTab) activeTab.classList.remove('hidden');
+
+            const activeBtn = document.querySelector(`.nav-btn[data-tab="${tabId}"]`);
+            if (activeBtn) {
+                activeBtn.classList.add('bg-cyan-500/10', 'text-cyan-400', 'border', 'border-cyan-500/20');
+                activeBtn.classList.remove('text-slate-400');
+            }
+
+            const titles = {
+                dashboard: ['Dashboard Overview', 'Current status and historical trends'],
+                log: ['Parameter Log History', 'Detailed record of past water tests'],
+                calculator: ['Dosing & Chemical Calculator', 'Precise dosage calculations based on tank volume'],
+                livestock: ['Livestock Inventory', 'Corals, fish, and invertebrate tracker'],
+                tasks: ['Maintenance Schedule', 'Recurring tasks and service reminders']
+            };
+
+            if (titles[tabId]) {
+                document.getElementById('pageTitle').textContent = titles[tabId][0];
+                document.getElementById('pageSubtitle').textContent = titles[tabId][1];
+            }
+
+            if (tabId === 'dashboard') updateChart();
+        }
+
+        // Mobile menu toggle
+        document.getElementById('mobileMenuBtn').addEventListener('click', () => {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('hidden');
+            sidebar.classList.toggle('translate-x-0');
+        });
+
+        // Get Latest Value
+        function getLatestParamValue(paramKey) {
+            const sorted = [...appState.logs].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+            for (let log of sorted) {
+                if (log[paramKey] !== null && log[paramKey] !== undefined && !isNaN(log[paramKey])) {
+                    return { value: log[paramKey], date: log.timestamp };
+                }
+            }
+            return { value: null, date: null };
+        }
+
+        // Render Metric Dashboard
+        function renderDashboard() {
+            const container = document.getElementById('metricCards');
+            container.innerHTML = '';
+
+            Object.keys(PARAM_CONFIG).forEach(key => {
+                const config = PARAM_CONFIG[key];
+                const latest = getLatestParamValue(key);
+                const hasVal = latest.value !== null;
+                const val = hasVal ? Number(latest.value) : null;
+
+                let statusColor = 'text-slate-400';
+                let statusBg = 'bg-slate-800/40';
+                let statusText = 'No Data';
+
+                if (hasVal) {
+                    if (val < config.min) {
+                        statusColor = 'text-amber-400';
+                        statusBg = 'bg-amber-500/10';
+                        statusText = 'Low';
+                    } else if (val > config.max) {
+                        statusColor = 'text-rose-400';
+                        statusBg = 'bg-rose-500/10';
+                        statusText = 'High';
+                    } else {
+                        statusColor = 'text-emerald-400';
+                        statusBg = 'bg-emerald-500/10';
+                        statusText = 'Optimal';
+                    }
+                }
+
+                const card = document.createElement('div');
+                card.className = 'bg-slate-900/80 border border-slate-800 rounded-2xl p-4 shadow-lg hover:border-slate-700 transition flex flex-col justify-between';
+                card.innerHTML = `
+                    <div class="flex justify-between items-start mb-2">
+                        <span class="text-xs font-semibold text-slate-400">${config.name}</span>
+                        <span class="px-2 py-0.5 rounded-md text-[10px] font-semibold ${statusBg} ${statusColor}">${statusText}</span>
+                    </div>
+                    <div class="flex items-baseline space-x-1 my-1">
+                        <span class="text-2xl sm:text-3xl font-bold tracking-tight text-slate-100">${hasVal ? val.toFixed(config.step < 0.1 ? 2 : 1) : '--'}</span>
+                        <span class="text-xs text-slate-400 font-medium">${config.unit}</span>
+                    </div>
+                    <div class="text-[11px] text-slate-500 flex justify-between items-center mt-2 pt-2 border-t border-slate-800/60">
+                        <span>Target: ${config.min} - ${config.max}</span>
+                        <span>${hasVal ? new Date(latest.date).toLocaleDateString(undefined, {month:'short', day:'numeric'}) : ''}</span>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+
+            renderDashboardTasks();
+        }
+
+        // Render Dashboard Tasks List
+        function renderDashboardTasks() {
+            const list = document.getElementById('dashboardTasksList');
+            list.innerHTML = '';
+
+            const pending = appState.tasks.filter(t => !t.completed).slice(0, 3);
+            if (pending.length === 0) {
+                list.innerHTML = '<p class="text-xs text-slate-500 italic py-2">No pending tasks!</p>';
+                return;
+            }
+
+            pending.forEach(task => {
+                const item = document.createElement('div');
+                item.className = 'flex items-center justify-between p-3 bg-slate-800/40 rounded-xl border border-slate-800';
+                item.innerHTML = `
+                    <div class="flex items-center space-x-3">
+                        <input type="checkbox" onchange="toggleTask('${task.id}')" class="w-4 h-4 rounded border-slate-700 bg-slate-800 text-cyan-500 focus:ring-0">
+                        <span class="text-xs text-slate-200 font-medium">${task.title}</span>
+                    </div>
+                    <span class="text-[10px] px-2 py-0.5 rounded bg-slate-800 text-slate-400 font-mono">${task.dueDate}</span>
+                `;
+                list.appendChild(item);
+            });
+        }
+
+        // Render Parameter Log Table
+        function renderLogTable() {
+            const tbody = document.getElementById('logTableBody');
+            tbody.innerHTML = '';
+
+            const sorted = [...appState.logs].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+            if (sorted.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="10" class="text-center py-6 text-slate-500 text-xs">No records available. Add your first test entry!</td></tr>';
+                return;
+            }
+
+            sorted.forEach(log => {
+                const dateStr = new Date(log.timestamp).toLocaleString(undefined, {
+                    month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit'
+                });
+
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-slate-800/30 transition text-xs';
+                tr.innerHTML = `
+                    <td class="p-3.5 font-medium text-slate-200 whitespace-nowrap">${dateStr}</td>
+                    <td class="p-3.5 font-mono ${log.nitrate !== null ? 'text-emerald-400 font-semibold' : 'text-slate-600'}">${log.nitrate !== null ? log.nitrate : '-'}</td>
+                    <td class="p-3.5 font-mono ${log.phosphate !== null ? 'text-amber-400 font-semibold' : 'text-slate-600'}">${log.phosphate !== null ? log.phosphate : '-'}</td>
+                    <td class="p-3.5 font-mono ${log.alkalinity !== null ? 'text-cyan-400' : 'text-slate-600'}">${log.alkalinity !== null ? log.alkalinity : '-'}</td>
+                    <td class="p-3.5 font-mono ${log.calcium !== null ? 'text-purple-400' : 'text-slate-600'}">${log.calcium !== null ? log.calcium : '-'}</td>
+                    <td class="p-3.5 font-mono ${log.magnesium !== null ? 'text-violet-400' : 'text-slate-600'}">${log.magnesium !== null ? log.magnesium : '-'}</td>
+                    <td class="p-3.5 font-mono text-slate-300">${log.salinity !== null ? log.salinity : '-'}</td>
+                    <td class="p-3.5 font-mono text-slate-300">${log.ph !== null ? log.ph : '-'}</td>
+                    <td class="p-3.5 text-slate-400 max-w-xs truncate" title="${log.notes || ''}">${log.notes || '-'}</td>
+                    <td class="p-3.5 text-right whitespace-nowrap">
+                        <button onclick="editLogEntry('${log.id}')" class="text-slate-400 hover:text-cyan-400 p-1"><i data-lucide="pencil" class="w-3.5 h-3.5"></i></button>
+                        <button onclick="deleteLogEntry('${log.id}')" class="text-slate-400 hover:text-rose-400 p-1 ml-1"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            if (window.lucide) lucide.createIcons();
+        }
+
+        // Render Chart
+        function updateChart() {
+            const ctx = document.getElementById('paramChart').getContext('2d');
+            const paramKey = document.getElementById('chartParamSelect').value;
+            const timeframeDays = parseInt(document.getElementById('chartTimeframeSelect').value);
+            const config = PARAM_CONFIG[paramKey];
+
+            const cutoff = new Date();
+            cutoff.setDate(cutoff.getDate() - timeframeDays);
+
+            const filteredLogs = appState.logs
+                .filter(l => new Date(l.timestamp) >= cutoff && l[paramKey] !== null && l[paramKey] !== undefined)
+                .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+
+            const labels = filteredLogs.map(l => new Date(l.timestamp).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }));
+            const dataValues = filteredLogs.map(l => l[paramKey]);
+
+            if (chartInstance) chartInstance.destroy();
+
+            chartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: `${config.name} (${config.unit})`,
+                        data: dataValues,
+                        borderColor: config.color,
+                        backgroundColor: `${config.color}20`,
+                        fill: true,
+                        tension: 0.3,
+                        pointRadius: 4,
+                        pointHoverRadius: 6,
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: '#0f172a',
+                            titleColor: '#e2e8f0',
+                            bodyColor: '#38bdf8',
+                            borderColor: '#334155',
+                            borderWidth: 1,
+                            padding: 10,
+                            displayColors: false
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: { color: '#1e293b' },
+                            ticks: { color: '#64748b', font: { size: 10 } }
+                        },
+                        y: {
+                            grid: { color: '#1e293b' },
+                            ticks: { color: '#64748b', font: { size: 10 } }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Calculator Updates
+        function populateCalculatorBrands() {
+            const elem = document.getElementById('calcElement').value;
+            const brandSelect = document.getElementById('calcBrand');
+            brandSelect.innerHTML = '';
+
+            DOSING_PRODUCTS[elem].forEach(p => {
+                const opt = document.createElement('option');
+                opt.value = p.id;
+                opt.textContent = p.name;
+                brandSelect.appendChild(opt);
+            });
+
+            calculateDose();
+        }
+
+        function calculateDose() {
+            const elem = document.getElementById('calcElement').value;
+            const brandId = document.getElementById('calcBrand').value;
+            const current = parseFloat(document.getElementById('calcCurrent').value) || 0;
+            const desired = parseFloat(document.getElementById('calcDesired').value) || 0;
+            const vol = parseFloat(document.getElementById('calcVolume').value) || appState.settings.volumeLiters;
+
+            const brandList = DOSING_PRODUCTS[elem] || [];
+            const product = brandList.find(b => b.id === brandId) || brandList[0];
+
+            if (!product) return;
+
+            const diff = desired - current;
+            const config = PARAM_CONFIG[elem === 'alk' ? 'alkalinity' : elem === 'ca' ? 'calcium' : 'magnesium'];
+
+            document.getElementById('calcTargetRange').textContent = `${config.min} - ${config.max} ${config.unit}`;
+            document.getElementById('calcMaxShift').textContent = `${product.maxShift} ${config.unit}`;
+
+            if (diff <= 0) {
+                document.getElementById('calcResultAmount').textContent = '0 ml';
+                document.getElementById('calcResultNote').textContent = 'Current level meets or exceeds desired target.';
+                return;
+            }
+
+            const totalMl = diff * vol * product.factor;
+            document.getElementById('calcResultAmount').textContent = `${totalMl.toFixed(1)} ml`;
+            document.getElementById('calcResultNote').textContent = `To raise ${config.name} by ${diff.toFixed(2)} ${config.unit} in ${vol} Liters.`;
+
+            if (diff > product.maxShift) {
+                document.getElementById('calcSafetyGuide').textContent = `Warning: A shift of ${diff.toFixed(1)} ${config.unit} exceeds the recommended maximum daily increase of ${product.maxShift} ${config.unit}. Split dose across multiple days!`;
+            } else {
+                document.getElementById('calcSafetyGuide').textContent = `Dose slowly into high flow area (sump). For auto-dosing pumps, spread evenly throughout the day.`;
+            }
+        }
+
+        // Modal Handlers
+        function openLogModal() {
+            editingLogId = null;
+            document.getElementById('logModalTitle').textContent = 'Log Water Parameters';
+            document.getElementById('logForm').reset();
+            const now = new Date();
+            now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+            document.getElementById('logDateTime').value = now.toISOString().slice(0, 16);
+            document.getElementById('logModal').classList.remove('hidden');
+        }
+
+        function closeLogModal() {
+            document.getElementById('logModal').classList.add('hidden');
+        }
+
+        function saveLogEntry(e) {
+            e.preventDefault();
+            const getNum = (id) => {
+                const val = document.getElementById(id).value;
+                return val !== '' ? parseFloat(val) : null;
+            };
+
+            const entry = {
+                id: editingLogId || Date.now().toString(),
+                timestamp: document.getElementById('logDateTime').value,
+                nitrate: getNum('logNO3'),
+                phosphate: getNum('logPO4'),
+                alkalinity: getNum('logAlk'),
+                calcium: getNum('logCa'),
+                magnesium: getNum('logMg'),
+                salinity: getNum('logSalinity'),
+                ph: getNum('logPH'),
+                temp: getNum('logTemp'),
+                notes: document.getElementById('logNotes').value
+            };
+
+            if (editingLogId) {
+                const idx = appState.logs.findIndex(l => l.id === editingLogId);
+                if (idx !== -1) appState.logs[idx] = entry;
+            } else {
+                appState.logs.push(entry);
+            }
+
+            saveState();
+            closeLogModal();
+            renderDashboard();
+            renderLogTable();
+            updateChart();
+        }
+
+        function editLogEntry(id) {
+            const log = appState.logs.find(l => l.id === id);
+            if (!log) return;
+
+            editingLogId = id;
+            document.getElementById('logModalTitle').textContent = 'Edit Log Entry';
+            document.getElementById('logDateTime').value = log.timestamp;
+            document.getElementById('logNO3').value = log.nitrate !== null ? log.nitrate : '';
+            document.getElementById('logPO4').value = log.phosphate !== null ? log.phosphate : '';
+            document.getElementById('logAlk').value = log.alkalinity !== null ? log.alkalinity : '';
+            document.getElementById('logCa').value = log.calcium !== null ? log.calcium : '';
+            document.getElementById('logMg').value = log.magnesium !== null ? log.magnesium : '';
+            document.getElementById('logSalinity').value = log.salinity !== null ? log.salinity : '';
+            document.getElementById('logPH').value = log.ph !== null ? log.ph : '';
+            document.getElementById('logTemp').value = log.temp !== null ? log.temp : '';
+            document.getElementById('logNotes').value = log.notes || '';
+
+            document.getElementById('logModal').classList.remove('hidden');
+        }
+
+        function deleteLogEntry(id) {
+            appState.logs = appState.logs.filter(l => l.id !== id);
+            saveState();
+            renderDashboard();
+            renderLogTable();
+            updateChart();
+        }
+
+        // Livestock Functions
+        function renderLivestock(filter = 'all') {
+            const grid = document.getElementById('livestockGrid');
+            grid.innerHTML = '';
+
+            const items = filter === 'all' ? appState.livestock : appState.livestock.filter(item => item.category === filter);
+
+            if (items.length === 0) {
+                grid.innerHTML = '<div class="col-span-full py-8 text-center text-slate-500 text-xs">No livestock recorded in this category.</div>';
+                return;
+            }
+
+            items.forEach(item => {
+                const card = document.createElement('div');
+                card.className = 'bg-slate-900/80 border border-slate-800 rounded-2xl p-4 shadow-lg space-y-3';
+                card.innerHTML = `
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <h4 class="font-semibold text-slate-100 text-sm">${item.name}</h4>
+                            <span class="text-[10px] uppercase font-semibold text-cyan-400 bg-cyan-500/10 px-2 py-0.5 rounded">${item.category}</span>
+                        </div>
+                        <button onclick="deleteLivestock('${item.id}')" class="text-slate-500 hover:text-rose-400 p-1"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
+                    </div>
+                    <div class="text-xs space-y-1 text-slate-400">
+                        <div class="flex justify-between"><span>Acquired:</span> <span class="text-slate-200 font-mono">${item.date}</span></div>
+                        <div class="flex justify-between"><span>Location:</span> <span class="text-slate-200">${item.location || 'N/A'}</span></div>
+                    </div>
+                    ${item.notes ? `<p class="text-xs text-slate-400 pt-2 border-t border-slate-800/80 italic">${item.notes}</p>` : ''}
+                `;
+                grid.appendChild(card);
+            });
+
+            if (window.lucide) lucide.createIcons();
+        }
+
+        function openLivestockModal() {
+            document.getElementById('livestockForm').reset();
+            document.getElementById('lsDate').value = new Date().toISOString().slice(0, 10);
+            document.getElementById('livestockModal').classList.remove('hidden');
+        }
+
+        function closeLivestockModal() {
+            document.getElementById('livestockModal').classList.add('hidden');
+        }
+
+        function saveLivestockEntry(e) {
+            e.preventDefault();
+            const newItem = {
+                id: Date.now().toString(),
+                name: document.getElementById('lsName').value,
+                category: document.getElementById('lsCategory').value,
+                date: document.getElementById('lsDate').value,
+                location: document.getElementById('lsLocation').value,
+                notes: document.getElementById('lsNotes').value
+            };
+            appState.livestock.push(newItem);
+            saveState();
+            closeLivestockModal();
+            renderLivestock();
+        }
+
+        function deleteLivestock(id) {
+            appState.livestock = appState.livestock.filter(i => i.id !== id);
+            saveState();
+            renderLivestock();
+        }
+
+        function filterLivestock(cat) {
+            document.querySelectorAll('.ls-filter-btn').forEach(btn => {
+                btn.classList.remove('bg-cyan-500/10', 'text-cyan-400', 'border', 'border-cyan-500/20');
+                btn.classList.add('text-slate-400');
+            });
+            const activeBtn = document.querySelector(`.ls-filter-btn[data-cat="${cat}"]`);
+            if (activeBtn) {
+                activeBtn.classList.add('bg-cyan-500/10', 'text-cyan-400', 'border', 'border-cyan-500/20');
+                activeBtn.classList.remove('text-slate-400');
+            }
+            renderLivestock(cat);
+        }
+
+        // Task Functions
+        function renderTasks() {
+            const list = document.getElementById('fullTasksList');
+            list.innerHTML = '';
+
+            if (appState.tasks.length === 0) {
+                list.innerHTML = '<p class="text-xs text-slate-500 text-center py-6">No scheduled maintenance tasks.</p>';
+                return;
+            }
+
+            appState.tasks.forEach(task => {
+                const item = document.createElement('div');
+                item.className = `flex items-center justify-between p-4 rounded-xl border ${task.completed ? 'bg-slate-900/40 border-slate-800/60 opacity-60' : 'bg-slate-800/40 border-slate-800'}`;
+                item.innerHTML = `
+                    <div class="flex items-center space-x-3">
+                        <input type="checkbox" ${task.completed ? 'checked' : ''} onchange="toggleTask('${task.id}')" class="w-4 h-4 rounded border-slate-700 bg-slate-800 text-cyan-500 focus:ring-0 cursor-pointer">
+                        <div>
+                            <span class="text-sm font-medium ${task.completed ? 'line-through text-slate-500' : 'text-slate-200'}">${task.title}</span>
+                            <div class="text-[10px] text-slate-400 flex space-x-2 mt-0.5">
+                                <span class="capitalize">Freq: ${task.freq}</span>
+                                <span>•</span>
+                                <span>Due: ${task.dueDate}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <button onclick="deleteTask('${task.id}')" class="text-slate-500 hover:text-rose-400 p-1"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                `;
+                list.appendChild(item);
+            });
+
+            if (window.lucide) lucide.createIcons();
+        }
+
+        function toggleTask(id) {
+            const task = appState.tasks.find(t => t.id === id);
+            if (task) {
+                task.completed = !task.completed;
+                saveState();
+                renderTasks();
+                renderDashboardTasks();
+            }
+        }
+
+        function openTaskModal() {
+            document.getElementById('taskForm').reset();
+            document.getElementById('taskDueDate').value = new Date().toISOString().slice(0, 10);
+            document.getElementById('taskModal').classList.remove('hidden');
+        }
+
+        function closeTaskModal() {
+            document.getElementById('taskModal').classList.add('hidden');
+        }
+
+        function saveTaskEntry(e) {
+            e.preventDefault();
+            const newTask = {
+                id: Date.now().toString(),
+                title: document.getElementById('taskTitle').value,
+                freq: document.getElementById('taskFreq').value,
+                dueDate: document.getElementById('taskDueDate').value,
+                completed: false
+            };
+            appState.tasks.push(newTask);
+            saveState();
+            closeTaskModal();
+            renderTasks();
+            renderDashboardTasks();
+        }
+
+        function deleteTask(id) {
+            appState.tasks = appState.tasks.filter(t => t.id !== id);
+            saveState();
+            renderTasks();
+            renderDashboardTasks();
+        }
+
+        // Tank Settings Modal
+        function openSettingsModal() {
+            document.getElementById('settingVolume').value = appState.settings.volumeLiters;
+            document.getElementById('settingsModal').classList.remove('hidden');
+        }
+
+        function closeSettingsModal() {
+            document.getElementById('settingsModal').classList.add('hidden');
+        }
+
+        function saveSettings(e) {
+            e.preventDefault();
+            const vol = parseFloat(document.getElementById('settingVolume').value);
+            if (vol > 0) {
+                appState.settings.volumeLiters = vol;
+                document.getElementById('sidebarVolumeText').textContent = `${vol} L`;
+                document.getElementById('calcVolume').value = vol;
+                saveState();
+                calculateDose();
+            }
+            closeSettingsModal();
+        }
+
+        // Export/Import
+        function exportData() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(appState, null, 2));
+            const downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", `reef_keeper_backup_${new Date().toISOString().slice(0,10)}.json`);
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+        }
+
+        function importData(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                try {
+                    const imported = JSON.parse(evt.target.result);
+                    if (imported.logs) {
+                        appState = imported;
+                        saveState();
+                        initApp();
+                        alert('Data successfully imported!');
+                    }
+                } catch (err) {
+                    alert('Invalid JSON backup file.');
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        // Initializer
+        function initApp() {
+            loadSavedState();
+            initAppUI();
+            if (window.initCloudSync) {
+                window.initCloudSync();
+            }
+        }
+
+        function initAppUI() {
+            document.getElementById('sidebarVolumeText').textContent = `${appState.settings.volumeLiters} L`;
+            document.getElementById('calcVolume').value = appState.settings.volumeLiters;
+
+            populateCalculatorBrands();
+            renderDashboard();
+            renderLogTable();
+            renderLivestock();
+            renderTasks();
+
+            if (window.lucide) lucide.createIcons();
+            updateChart();
+        }
+
+        window.initAppUI = initAppUI;
+
+        window.onload = function() {
+            initApp();
+        };
+    </script>
+</body>
+</html>
