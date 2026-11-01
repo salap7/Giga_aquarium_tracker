@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aquarium Parameter Tracker</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            500: '#0ea5e9',
+                            600: '#0284c7',
+                            800: '#075985',
+                            900: '#0c4a6e',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col antialiased">
+
+    <!-- Top Navigation Header -->
+    <header class="border-b border-slate-800 bg-slate-900/80 backdrop-blur sticky top-0 z-30">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="p-2 bg-cyan-500/10 text-cyan-400 rounded-xl border border-cyan-500/20">
+                    <i class="fa-solid fa-fish-fins text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-lg text-slate-100 leading-none">Aquarium Water Log</h1>
+                    <p class="text-xs text-slate-400 mt-1">Water Quality Monitoring System</p>
+                </div>
+            </div>
+            
+            <div class="flex items-center space-x-2">
+                <button onclick="window.exportCSV()" class="px-3 py-2 text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg transition border border-slate-700 flex items-center space-x-1.5" title="Export CSV Spreadsheet">
+                    <i class="fa-solid fa-file-csv text-emerald-400"></i>
+                    <span class="hidden sm:inline">Export CSV</span>
+                </button>
+                <button onclick="window.exportJSONBackup()" class="px-3 py-2 text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg transition border border-slate-700 flex items-center space-x-1.5" title="Export JSON Backup">
+                    <i class="fa-solid fa-database text-cyan-400"></i>
+                    <span class="hidden sm:inline">Export JSON</span>
+                </button>
+                <button onclick="window.openSyncModal()" class="px-3 py-2 text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg transition border border-slate-700 flex items-center space-x-1.5">
+                    <i class="fa-solid fa-rotate text-cyan-400"></i>
+                    <span class="hidden sm:inline">Cloud Sync</span>
+                </button>
+                <button onclick="window.openDriveModal()" class="px-3 py-2 text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg transition border border-slate-700 flex items-center space-x-1.5">
+                    <i class="fa-brands fa-google-drive text-emerald-400"></i>
+                    <span class="hidden sm:inline">Drive / Backup</span>
+                </button>
+                <button onclick="document.getElementById('fileImporter').click()" class="px-3 py-2 text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg transition border border-slate-700 flex items-center space-x-1.5">
+                    <i class="fa-solid fa-file-import text-amber-400"></i>
+                    <span class="hidden sm:inline">Import</span>
+                </button>
+                <button onclick="window.openEntryModal()" class="px-3 py-2 text-xs font-medium bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg transition flex items-center space-x-1.5 shadow-lg shadow-cyan-600/20">
+                    <i class="fa-solid fa-plus"></i>
+                    <span>New Entry</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Hidden File Input for CSV / JSON import -->
+    <input type="file" id="fileImporter" accept=".csv, .json" class="hidden" onchange="window.handleFileUpload(event)">
+
+    <!-- Main Application Container -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+
+        <!-- Stat Summary Cards -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-sm">
+                <div class="text-xs font-medium text-slate-400 flex justify-between items-center">
+                    <span>Phosphat (PO4)</span>
+                    <span class="text-xs text-cyan-400 font-mono">ppm</span>
+                </div>
+                <div id="cardPo4Val" class="text-2xl font-bold text-slate-100 mt-2 font-mono">-</div>
+                <div class="text-[11px] text-slate-500 mt-1">Target: &lt; 0.1 ppm</div>
+            </div>
+
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-sm">
+                <div class="text-xs font-medium text-slate-400 flex justify-between items-center">
+                    <span>Nitrat (NO3)</span>
+                    <span class="text-xs text-emerald-400 font-mono">ppm</span>
+                </div>
+                <div id="cardNo3Val" class="text-2xl font-bold text-slate-100 mt-2 font-mono">-</div>
+                <div class="text-[11px] text-slate-500 mt-1">Target: 5 - 15 ppm</div>
+            </div>
+
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-sm">
+                <div class="text-xs font-medium text-slate-400 flex justify-between items-center">
+                    <span>Karbonathärte (KH)</span>
+                    <span class="text-xs text-amber-400 font-mono">°dH</span>
+                </div>
+                <div id="cardKhVal" class="text-2xl font-bold text-slate-100 mt-2 font-mono">-</div>
+                <div class="text-[11px] text-slate-500 mt-1">Target: 4 - 8 °dH</div>
+            </div>
+
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-sm">
+                <div class="text-xs font-medium text-slate-400 flex justify-between items-center">
+                    <span>Leitwert</span>
+                    <span class="text-xs text-purple-400 font-mono">µS/cm</span>
+                </div>
+                <div id="cardLeitwertVal" class="text-2xl font-bold text-slate-100 mt-2 font-mono">-</div>
+                <div class="text-[11px] text-slate-500 mt-1">Target: 300 - 500 µS</div>
+            </div>
+        </div>
+
+        <!-- Parameter Chart Panel -->
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-sm space-y-4">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h2 class="font-bold text-slate-200">Parameter Trends</h2>
+                    <p class="text-xs text-slate-400">Historical comparison over time</p>
+                </div>
+                <div class="text-xs text-slate-400 flex items-center space-x-3">
+                    <span class="inline-flex items-center"><span class="w-2.5 h-2.5 rounded-full bg-sky-400 inline-block mr-1.5"></span>PO4</span>
+                    <span class="inline-flex items-center"><span class="w-2.5 h-2.5 rounded-full bg-emerald-400 inline-block mr-1.5"></span>NO3</span>
+                    <span class="inline-flex items-center"><span class="w-2.5 h-2.5 rounded-full bg-amber-400 inline-block mr-1.5"></span>KH</span>
+                    <span class="inline-flex items-center"><span class="w-2.5 h-2.5 rounded-full bg-purple-400 inline-block mr-1.5"></span>Leitwert</span>
+                </div>
+            </div>
+            <div class="h-64 sm:h-80 w-full relative">
+                <canvas id="parameterChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Measurements Log Table -->
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-sm">
+            <div class="px-6 py-4 border-b border-slate-800 flex items-center justify-between flex-wrap gap-2">
+                <div>
+                    <h2 class="font-bold text-slate-200">Measurement History</h2>
+                    <p id="recordCount" class="text-xs text-slate-400">Loading records...</p>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <button onclick="window.exportCSV()" class="px-3 py-1.5 text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg border border-slate-700 transition flex items-center space-x-1.5">
+                        <i class="fa-solid fa-download text-emerald-400"></i>
+                        <span>Download CSV</span>
+                    </button>
+                    <button onclick="window.toggleSortDirection()" class="px-3 py-1.5 text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg border border-slate-700 transition flex items-center space-x-2">
+                        <i class="fa-solid fa-sort"></i>
+                        <span>Toggle Sort</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-sm text-slate-300">
+                    <thead class="bg-slate-950/60 text-xs uppercase text-slate-400 font-semibold border-b border-slate-800">
+                        <tr>
+                            <th class="py-3.5 px-6 cursor-pointer hover:text-slate-200" onclick="window.toggleSortDirection()">Datum <i class="fa-solid fa-sort ml-1"></i></th>
+                            <th class="py-3.5 px-6">PO4</th>
+                            <th class="py-3.5 px-6">NO3</th>
+                            <th class="py-3.5 px-6">KH</th>
+                            <th class="py-3.5 px-6">Leitwert</th>
+                            <th class="py-3.5 px-6">Comment / Action</th>
+                            <th class="py-3.5 px-4 text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody" class="divide-y divide-slate-800/60 font-mono text-xs sm:text-sm">
+                        <!-- Table rows populated dynamically -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Modal: Entry Add/Edit -->
+    <div id="entryModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <h3 id="modalTitle" class="font-bold text-slate-100">Add Measurement Record</h3>
+                <button onclick="window.closeEntryModal()" class="text-slate-400 hover:text-slate-200 text-lg">&times;</button>
+            </div>
+            
+            <form id="entryForm" onsubmit="window.saveEntryForm(event)" class="space-y-4 text-sm">
+                <input type="hidden" id="entryId">
+                <div>
+                    <label class="block text-xs font-medium text-slate-400 mb-1">Datum / Date</label>
+                    <input type="text" id="fieldDate" required placeholder="e.g. 25 Oct" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-slate-100 focus:outline-none focus:border-cyan-500">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-400 mb-1">PO4 (ppm)</label>
+                        <input type="text" id="fieldPo4" placeholder="0.9" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-slate-100 focus:outline-none focus:border-cyan-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-400 mb-1">NO3 (ppm)</label>
+                        <input type="text" id="fieldNo3" placeholder="13.4" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-slate-100 focus:outline-none focus:border-cyan-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-400 mb-1">KH (°dH)</label>
+                        <input type="text" id="fieldKh" placeholder="6.4" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-slate-100 focus:outline-none focus:border-cyan-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-400 mb-1">Leitwert (µS)</label>
+                        <input type="text" id="fieldLeitwert" placeholder="350" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-slate-100 focus:outline-none focus:border-cyan-500">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-400 mb-1">Comment / Notes</label>
+                    <input type="text" id="fieldComment" placeholder="e.g. Water change 40%" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-slate-100 focus:outline-none focus:border-cyan-500">
+                </div>
+
+                <div class="flex items-center justify-end space-x-3 pt-2">
+                    <button type="button" onclick="window.closeEntryModal()" class="px-4 py-2 text-xs font-medium text-slate-400 hover:text-slate-200 bg-slate-800 rounded-lg">Cancel</button>
+                    <button type="submit" class="px-4 py-2 text-xs font-medium text-white bg-cyan-600 hover:bg-cyan-500 rounded-lg shadow">Save Measurement</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: Google Drive & Exports -->
+    <div id="driveModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <h3 class="font-bold text-slate-100 flex items-center space-x-2">
+                    <i class="fa-brands fa-google-drive text-emerald-400"></i>
+                    <span>Google Drive & Application Export</span>
+                </h3>
+                <button onclick="window.closeDriveModal()" class="text-slate-400 hover:text-slate-200 text-lg">&times;</button>
+            </div>
+
+            <div class="space-y-3 text-xs text-slate-300">
+                <p>Save your complete aquarium measurement database to Google Drive or export as spreadsheets:</p>
+                <div class="grid grid-cols-1 gap-2.5 pt-1">
+                    <button onclick="document.getElementById('fileImporter').click()" class="w-full p-3 bg-slate-950 border border-slate-800 hover:border-slate-700 rounded-xl flex items-center justify-between transition text-left">
+                        <div class="flex items-center space-x-3">
+                            <i class="fa-solid fa-file-import text-amber-400 text-lg"></i>
+                            <div>
+                                <div class="font-semibold text-slate-200">Import CSV or JSON File</div>
+                                <div class="text-[11px] text-slate-400">Upload existing water parameters dataset</div>
+                            </div>
+                        </div>
+                        <i class="fa-solid fa-upload text-slate-500"></i>
+                    </button>
+
+                    <button onclick="window.exportCSV()" class="w-full p-3 bg-slate-950 border border-slate-800 hover:border-slate-700 rounded-xl flex items-center justify-between transition text-left">
+                        <div class="flex items-center space-x-3">
+                            <i class="fa-solid fa-file-csv text-emerald-400 text-lg"></i>
+                            <div>
+                                <div class="font-semibold text-slate-200">Export CSV Spreadsheet</div>
+                                <div class="text-[11px] text-slate-400">Open in Google Sheets, Excel, or Numbers</div>
+                            </div>
+                        </div>
+                        <i class="fa-solid fa-download text-slate-500"></i>
+                    </button>
+
+                    <button onclick="window.exportJSONBackup()" class="w-full p-3 bg-slate-950 border border-slate-800 hover:border-slate-700 rounded-xl flex items-center justify-between transition text-left">
+                        <div class="flex items-center space-x-3">
+                            <i class="fa-solid fa-database text-cyan-400 text-lg"></i>
+                            <div>
+                                <div class="font-semibold text-slate-200">Download JSON Data Backup</div>
+                                <div class="text-[11px] text-slate-400">Complete raw database backup file</div>
+                            </div>
+                        </div>
+                        <i class="fa-solid fa-download text-slate-500"></i>
+                    </button>
+
+                    <button onclick="window.exportApplicationHTML()" class="w-full p-3 bg-slate-950 border border-slate-800 hover:border-slate-700 rounded-xl flex items-center justify-between transition text-left">
+                        <div class="flex items-center space-x-3">
+                            <i class="fa-solid fa-code text-purple-400 text-lg"></i>
+                            <div>
+                                <div class="font-semibold text-slate-200">Download Standalone Web App (.html)</div>
+                                <div class="text-[11px] text-slate-400">Save executable web app directly to Google Drive</div>
+                            </div>
+                        </div>
+                        <i class="fa-solid fa-download text-slate-500"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="flex justify-end pt-2">
+                <button onclick="window.closeDriveModal()" class="px-4 py-2 text-xs font-medium text-slate-300 bg-slate-800 hover:bg-slate-700 rounded-lg">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Cloud Sync -->
+    <div id="syncModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <h3 class="font-bold text-slate-100 flex items-center space-x-2">
+                    <i class="fa-solid fa-rotate text-cyan-400"></i>
+                    <span>Cloud Synchronization</span>
+                </h3>
+                <button onclick="window.closeSyncModal()" class="text-slate-400 hover:text-slate-200 text-lg">&times;</button>
+            </div>
+
+            <div class="space-y-3 text-xs text-slate-300">
+                <p>Synchronize your aquarium readings across browser tabs, windows, and local sessions.</p>
+                
+                <div>
+                    <label class="block font-medium text-slate-400 mb-1">Active Sync Key:</label>
+                    <div class="flex space-x-2">
+                        <input type="text" id="syncIdDisplay" placeholder="Local sync key" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-cyan-400 font-mono text-xs focus:outline-none focus:border-cyan-500">
+                        <button onclick="window.copySyncId()" class="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg border border-slate-700 font-medium">Copy</button>
+                    </div>
+                </div>
+
+                <div id="syncStatus" class="hidden text-xs py-2 px-3 rounded-lg bg-slate-950 border border-slate-800"></div>
+
+                <div class="grid grid-cols-2 gap-2 pt-2">
+                    <button onclick="window.pushToLocalSync()" class="w-full py-2.5 px-3 bg-cyan-600 hover:bg-cyan-500 text-white font-medium rounded-lg transition flex items-center justify-center space-x-1.5 shadow">
+                        <i class="fa-solid fa-floppy-disk"></i>
+                        <span>Save Local Cache</span>
+                    </button>
+                    <button onclick="window.pullFromLocalSync()" class="w-full py-2.5 px-3 bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium rounded-lg border border-slate-700 transition flex items-center justify-center space-x-1.5">
+                        <i class="fa-solid fa-rotate text-cyan-400"></i>
+                        <span>Reload Saved Data</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="flex justify-end pt-2">
+                <button onclick="window.closeSyncModal()" class="px-4 py-2 text-xs font-medium text-slate-300 bg-slate-800 hover:bg-slate-700 rounded-lg">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Logic Script Block -->
+    <script>
+        // Initial Preloaded Dataset
+        const defaultEntries = [
+            { id: '1793449316079_1_moiq', date: '17. June', po4: '0.9ppm', no3: '75ppm', kh: '', leitwert: '', comment: 'Leitungswasser No3 41.2ppm' },
+            { id: '1793449316079_2_tyap', date: '21. June', po4: '', no3: '<25ppm', kh: '6.4', leitwert: '310', comment: 'Leitungswasser' },
+            { id: '1793449316079_3_vwiu', date: '1. July', po4: '', no3: '12.5', kh: '', leitwert: '', comment: '' },
+            { id: '1793449316079_4_on6t', date: '21 July', po4: '', no3: '', kh: '4.8', leitwert: '', comment: 'Ph 9.34' },
+            { id: '1793449316079_5_ij8h', date: '23 July', po4: '', no3: '', kh: '', leitwert: '', comment: 'Ph 6.6 gemessen mit Salty ph Probe' },
+            { id: '1793449316079_6_7zdr', date: '27 July', po4: '>0.9ppm', no3: '31.1', kh: '', leitwert: '', comment: '' },
+            { id: '1793449316079_7_s568', date: '28 July', po4: '', no3: '', kh: '7.1', leitwert: '', comment: '2 Wasserwechsel' },
+            { id: '1793449316079_8_nc14', date: '29 July', po4: '0.44ppm', no3: '3.8ppm', kh: '', leitwert: '', comment: '1 WW 40%' },
+            { id: '1793449316079_9_huxj', date: '30 July', po4: '0.50ppm', no3: '', kh: '', leitwert: '', comment: '500 PO4 Absorber added' },
+            { id: '1793449316079_10_gnbz', date: '31 July', po4: '0.40ppm', no3: '', kh: '', leitwert: '', comment: '' },
+            { id: '1793449316079_11_r7sf', date: '01 Aug', po4: '0.36', no3: '', kh: '', leitwert: '', comment: '' },
+            { id: '1793449316079_12_61u6', date: '1. Aug', po4: '0.19', no3: '10.9', kh: '', leitwert: '', comment: 'Licht auf 6 Std. Reduziert' },
+            { id: '1793449316079_13_3z4k', date: '02 Aug', po4: '0.32', no3: '', kh: '', leitwert: '', comment: '' },
+            { id: '1793449316079_14_ta25', date: '04 Aug', po4: '0.4', no3: '', kh: '', leitwert: '', comment: '' },
+            { id: '1793449316079_15_n5nq', date: '06 Aug', po4: '0.36', no3: '', kh: '', leitwert: '', comment: '' },
+            { id: '1793449316079_16_6mxn', date: '07 Aug', po4: '0.27?', no3: '', kh: '', leitwert: '', comment: 'Filterauslass: PO4 0.39ppm abends: 0.37ppm' },
+            { id: '1793449316079_17_bgoa', date: '08 Aug', po4: '0.32', no3: '', kh: '', leitwert: '', comment: '' },
+            { id: '1793449316079_18_97ds', date: '09 Aug', po4: '0.02', no3: '', kh: '', leitwert: '', comment: '' },
+            { id: '1793449316079_19_sbvu', date: '09 Aug', po4: '0.12', no3: '3.4', kh: '', leitwert: '', comment: '' },
+            { id: '1793449316079_20_g17m', date: '10 Aug', po4: '0.01', no3: '', kh: '', leitwert: '', comment: 'PO4 Absorber removed' },
+            { id: '1793449316079_21_gb3r', date: '11 Aug', po4: '0.15', no3: '', kh: '', leitwert: '', comment: 'PO4 Absorber back' },
+            { id: '1793449316079_22_p2m5', date: '12 Aug', po4: '0.11', no3: '', kh: '', leitwert: '', comment: '' },
+            { id: '1793449316079_23_0tjf', date: '14 Aug', po4: '0.06', no3: '', kh: '', leitwert: '', comment: '' },
+            { id: '1793449316079_24_ce18', date: '16 Aug', po4: '0.08', no3: '', kh: '', leitwert: '', comment: '' },
+            { id: '1793449316079_25_rgj0', date: '18 Aug', po4: '0.11', no3: '', kh: '', leitwert: '', comment: '' },
+            { id: '1793449316079_26_bp6u', date: '20 Aug', po4: '0.09', no3: '', kh: '', leitwert: '', comment: '' },
+            { id: '1793449316079_27_ca6d', date: '21 Aug', po4: '0.08', no3: '', kh: '', leitwert: '', comment: '' },
+            { id: '1793449316079_28_2y4f', date: '4 Sept', po4: '0.21', no3: '24.6', kh: '', leitwert: '450', comment: 'WW Hälfte' },
+            { id: '1793449316079_29_msfh', date: '11 Oct', po4: '0.9 outside', no3: '', kh: '', leitwert: '', comment: '' },
+            { id: '1793449316080_30_roew', date: '13 Oct', po4: '0.9 outside', no3: '27.2', kh: '', leitwert: '500', comment: 'WW Hälfte' },
+            { id: '1793449316080_31_qah6', date: '13 Oct', po4: '0.9 outside', no3: '19', kh: '', leitwert: '350', comment: '' },
+            { id: '1793449316080_32_gdpb', date: '24 Oct', po4: '', no3: '', kh: '', leitwert: '', comment: 'WW Hälfte' },
+            { id: '1793449316080_33_p17u', date: '25 Oct', po4: '0.9', no3: '13.4', kh: '', leitwert: '', comment: '' },
+            { id: '1793449316080_34_hpv5', date: '30 Oct', po4: '', no3: '', kh: '', leitwert: '', comment: '40& WW, 400uS Cond.' }
+        ];
+
+        // Load cached local storage or set default
+        const localCache = localStorage.getItem('aquarium_data_entries');
+        try {
+            window.dataEntries = localCache ? JSON.parse(localCache) : [...defaultEntries];
+        } catch (e) {
+            window.dataEntries = [...defaultEntries];
+        }
+
+        window.sortAscending = true;
+
+        window.saveLocal = function() {
+            try {
+                localStorage.setItem('aquarium_data_entries', JSON.stringify(window.dataEntries));
+            } catch (e) {}
+        };
+
+        window.parseVal = function(val) {
+            if (!val) return null;
+            const cleaned = val.replace(/[^0-9.]/g, '');
+            const parsed = parseFloat(cleaned);
+            return isNaN(parsed) ? null : parsed;
+        };
+
+        window.parseDate = function(dateStr) {
+            if (!dateStr) return 0;
+            const monthMap = {
+                'jan': 0, 'feb': 1, 'mar': 2, 'apr': 3, 'may': 4, 'jun': 5,
+                'june': 5, 'jul': 6, 'july': 6, 'aug': 7, 'sep': 8, 'sept': 8,
+                'oct': 9, 'nov': 10, 'dec': 11
+            };
+            const parts = dateStr.trim().split(/\s+/);
+            if (parts.length >= 2) {
+                let day = parseInt(parts[0].replace(/[^0-9]/g, '')) || 1;
+                let monthStr = parts[1].toLowerCase().replace(/[^a-z]/g, '');
+                let month = monthMap[monthStr] !== undefined ? monthMap[monthStr] : 0;
+                return new Date(2024, month, day).getTime();
+            }
+            return 0;
+        };
+
+        window.toggleSortDirection = function() {
+            window.sortAscending = !window.sortAscending;
+            window.renderTable();
+        };
+
+        window.renderTable = function() {
+            const tbody = document.getElementById('tableBody');
+            const recordCount = document.getElementById('recordCount');
+            if (!tbody) return;
+
+            window.dataEntries.sort((a, b) => {
+                const timeA = window.parseDate(a.date);
+                const timeB = window.parseDate(b.date);
+                return window.sortAscending ? timeA - timeB : timeB - timeA;
+            });
+
+            tbody.innerHTML = '';
+            recordCount.innerText = `${window.dataEntries.length} recorded measurements (${window.sortAscending ? 'Oldest → Newest' : 'Newest → Oldest'})`;
+
+            window.dataEntries.forEach(entry => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-800/40 transition border-b border-slate-800/40";
+                tr.innerHTML = `
+                    <td class="py-3 px-6 font-medium text-slate-200">${entry.date || '-'}</td>
+                    <td class="py-3 px-6 text-cyan-400 font-medium">${entry.po4 || '-'}</td>
+                    <td class="py-3 px-6 text-emerald-400 font-medium">${entry.no3 || '-'}</td>
+                    <td class="py-3 px-6 text-amber-400 font-medium">${entry.kh || '-'}</td>
+                    <td class="py-3 px-6 text-purple-400 font-medium">${entry.leitwert || '-'}</td>
+                    <td class="py-3 px-6 text-slate-400 text-xs italic">${entry.comment || '-'}</td>
+                    <td class="py-3 px-4 text-right space-x-2">
+                        <button onclick="window.editEntry('${entry.id}')" class="text-slate-400 hover:text-cyan-400 p-1.5 transition rounded-lg hover:bg-slate-800" title="Edit Entry">
+                            <i class="fa-solid fa-pen-to-square"></i>
+                        </button>
+                        <button onclick="window.deleteEntry('${entry.id}')" class="text-slate-400 hover:text-rose-400 p-1.5 transition rounded-lg hover:bg-slate-800" title="Delete Entry">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            window.saveLocal();
+            window.updateSummaryCards();
+            window.updateChart();
+        };
+
+        window.updateSummaryCards = function() {
+            if (!window.dataEntries.length) return;
+
+            let latestPo4 = '-', latestNo3 = '-', latestKh = '-', latestLeitwert = '-';
+
+            for (let i = window.dataEntries.length - 1; i >= 0; i--) {
+                const item = window.dataEntries[i];
+                if (latestPo4 === '-' && item.po4) latestPo4 = item.po4;
+                if (latestNo3 === '-' && item.no3) latestNo3 = item.no3;
+                if (latestKh === '-' && item.kh) latestKh = item.kh;
+                if (latestLeitwert === '-' && item.leitwert) latestLeitwert = item.leitwert;
+            }
+
+            document.getElementById('cardPo4Val').innerText = latestPo4;
+            document.getElementById('cardNo3Val').innerText = latestNo3;
+            document.getElementById('cardKhVal').innerText = latestKh;
+            document.getElementById('cardLeitwertVal').innerText = latestLeitwert;
+        };
+
+        window.updateChart = function() {
+            const canvas = document.getElementById('parameterChart');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            if (!ctx) return;
+
+            const labels = window.dataEntries.map(e => e.date);
+            const po4Data = window.dataEntries.map(e => window.parseVal(e.po4));
+            const no3Data = window.dataEntries.map(e => window.parseVal(e.no3));
+            const khData = window.dataEntries.map(e => window.parseVal(e.kh));
+            const leitwertData = window.dataEntries.map(e => window.parseVal(e.leitwert));
+
+            if (window.aquariumChart) {
+                window.aquariumChart.destroy();
+            }
+
+            window.aquariumChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        { label: 'PO4 (ppm)', data: po4Data, borderColor: '#38bdf8', backgroundColor: 'rgba(56, 189, 248, 0.1)', borderWidth: 2, tension: 0.3, spanGaps: true },
+                        { label: 'NO3 (ppm)', data: no3Data, borderColor: '#34d399', backgroundColor: 'rgba(52, 211, 153, 0.1)', borderWidth: 2, tension: 0.3, spanGaps: true },
+                        { label: 'KH', data: khData, borderColor: '#fbbf24', backgroundColor: 'rgba(251, 191, 36, 0.1)', borderWidth: 2, tension: 0.3, spanGaps: true },
+                        { label: 'Conductivity (µS)', data: leitwertData, borderColor: '#c084fc', backgroundColor: 'rgba(192, 132, 252, 0.1)', borderWidth: 2, tension: 0.3, spanGaps: true, yAxisID: 'y1' }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: { mode: 'index', intersect: false },
+                    plugins: { legend: { labels: { color: '#94a3b8', font: { family: 'Inter', size: 12 } } } },
+                    scales: {
+                        x: { grid: { color: 'rgba(51, 65, 85, 0.3)' }, ticks: { color: '#94a3b8' } },
+                        y: { grid: { color: 'rgba(51, 65, 85, 0.3)' }, ticks: { color: '#94a3b8' }, title: { display: true, text: 'PO4 / NO3 / KH', color: '#64748b' } },
+                        y1: { type: 'linear', display: true, position: 'right', grid: { drawOnChartArea: false }, ticks: { color: '#c084fc' }, title: { display: true, text: 'Conductivity (µS)', color: '#c084fc' } }
+                    }
+                }
+            });
+        };
+
+        // Modals
+        window.openEntryModal = function(id = null) {
+            document.getElementById('entryId').value = id || '';
+            document.getElementById('modalTitle').innerText = id ? 'Edit Measurement Record' : 'Add Measurement Record';
+            
+            if (id) {
+                const item = window.dataEntries.find(e => e.id === id);
+                if (item) {
+                    document.getElementById('fieldDate').value = item.date || '';
+                    document.getElementById('fieldPo4').value = item.po4 || '';
+                    document.getElementById('fieldNo3').value = item.no3 || '';
+                    document.getElementById('fieldKh').value = item.kh || '';
+                    document.getElementById('fieldLeitwert').value = item.leitwert || '';
+                    document.getElementById('fieldComment').value = item.comment || '';
+                }
+            } else {
+                document.getElementById('entryForm').reset();
+            }
+            document.getElementById('entryModal').classList.remove('hidden');
+        };
+
+        window.closeEntryModal = function() {
+            document.getElementById('entryModal').classList.add('hidden');
+        };
+
+        window.openDriveModal = function() {
+            document.getElementById('driveModal').classList.remove('hidden');
+        };
+
+        window.closeDriveModal = function() {
+            document.getElementById('driveModal').classList.add('hidden');
+        };
+
+        window.openSyncModal = function() {
+            const key = 'LOCAL_SYNC_' + (Math.random().toString(36).substring(2, 8).toUpperCase());
+            document.getElementById('syncIdDisplay').value = key;
+            document.getElementById('syncModal').classList.remove('hidden');
+        };
+
+        window.closeSyncModal = function() {
+            document.getElementById('syncModal').classList.add('hidden');
+        };
+
+        window.copySyncId = function() {
+            const input = document.getElementById('syncIdDisplay');
+            input.select();
+            document.execCommand('copy');
+        };
+
+        window.showSyncStatus = function(msg, isError = false) {
+            const el = document.getElementById('syncStatus');
+            el.classList.remove('hidden', 'text-rose-400', 'text-emerald-400');
+            el.classList.add(isError ? 'text-rose-400' : 'text-emerald-400');
+            el.innerText = msg;
+        };
+
+        window.pushToLocalSync = function() {
+            window.saveLocal();
+            window.showSyncStatus(`Successfully saved dataset to browser memory! (${window.dataEntries.length} items)`);
+        };
+
+        window.pullFromLocalSync = function() {
+            const localCache = localStorage.getItem('aquarium_data_entries');
+            if (localCache) {
+                try {
+                    window.dataEntries = JSON.parse(localCache);
+                    window.renderTable();
+                    window.showSyncStatus(`Loaded ${window.dataEntries.length} records from browser storage!`);
+                } catch (e) {
+                    window.showSyncStatus('Failed to parse cached data.', true);
+                }
+            } else {
+                window.showSyncStatus('No cached dataset found in browser storage.', true);
+            }
+        };
+
+        window.editEntry = function(id) {
+            window.openEntryModal(id);
+        };
+
+        window.deleteEntry = function(id) {
+            window.dataEntries = window.dataEntries.filter(e => e.id !== id);
+            window.renderTable();
+        };
+
+        window.saveEntryForm = function(event) {
+            event.preventDefault();
+            const id = document.getElementById('entryId').value;
+            const newRecord = {
+                id: id || Date.now().toString(),
+                date: document.getElementById('fieldDate').value,
+                po4: document.getElementById('fieldPo4').value,
+                no3: document.getElementById('fieldNo3').value,
+                kh: document.getElementById('fieldKh').value,
+                leitwert: document.getElementById('fieldLeitwert').value,
+                comment: document.getElementById('fieldComment').value
+            };
+
+            if (id) {
+                const idx = window.dataEntries.findIndex(e => e.id === id);
+                if (idx !== -1) window.dataEntries[idx] = newRecord;
+            } else {
+                window.dataEntries.push(newRecord);
+            }
+
+            window.closeEntryModal();
+            window.renderTable();
+        };
+
+        // Export Functions
+        window.exportCSV = function() {
+            let csv = 'Datum,PO4,NO3,KH,Leitwert,Comment\n';
+            window.dataEntries.forEach(e => {
+                csv += `"${e.date || ''}","${e.po4 || ''}","${e.no3 || ''}","${e.kh || ''}","${e.leitwert || ''}","${e.comment || ''}"\n`;
+            });
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'Aquarium_Water_Parameters.csv';
+            a.click();
+        };
+
+        window.exportJSONBackup = function() {
+            const json = JSON.stringify(window.dataEntries, null, 2);
+            const blob = new Blob([json], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'Aquarium_Data_Backup.json';
+            a.click();
+        };
+
+        window.exportApplicationHTML = function() {
+            const html = document.documentElement.outerHTML;
+            const blob = new Blob([html], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'Aquarium_Tracker_App.html';
+            a.click();
+        };
+
+        // Import CSV or JSON File
+        window.handleFileUpload = function(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const content = e.target.result;
+                try {
+                    if (file.name.endsWith('.json')) {
+                        const parsed = JSON.parse(content);
+                        if (Array.isArray(parsed)) {
+                            window.dataEntries = parsed;
+                        }
+                    } else {
+                        const parseCSV = (str) => {
+                            const arr = [];
+                            let quote = false;
+                            let row = [''];
+                            for (let c = 0; c < str.length; c++) {
+                                const cc = str[c], nc = str[c+1];
+                                if (cc === '"') {
+                                    if (quote && nc === '"') { row[row.length - 1] += '"'; c++; }
+                                    else { quote = !quote; }
+                                } else if ((cc === ',' || cc === ';') && !quote) {
+                                    row.push('');
+                                } else if ((cc === '\r' || cc === '\n') && !quote) {
+                                    if (cc === '\r' && nc === '\n') { c++; }
+                                    arr.push(row);
+                                    row = [''];
+                                } else {
+                                    row[row.length - 1] += cc;
+                                }
+                            }
+                            if (row.length > 1 || row[0] !== '') arr.push(row);
+                            return arr;
+                        };
+
+                        const rows = parseCSV(content);
+                        if (rows.length > 0) {
+                            const newEntries = [];
+                            let startIdx = 0;
+                            const firstRow = rows[0].map(c => c.trim().toLowerCase());
+                            if (firstRow.some(col => col.includes('datum') || col.includes('date') || col.includes('po4'))) {
+                                startIdx = 1;
+                            }
+
+                            for (let i = startIdx; i < rows.length; i++) {
+                                const clean = rows[i].map(p => p.trim());
+                                if (clean.length >= 1 && clean.some(cell => cell.length > 0)) {
+                                    newEntries.push({
+                                        id: Date.now().toString() + '_' + i + '_' + Math.random().toString(36).substr(2, 4),
+                                        date: clean[0] || '',
+                                        po4: clean[1] || '',
+                                        no3: clean[2] || '',
+                                        kh: clean[3] || '',
+                                        leitwert: clean[4] || '',
+                                        comment: clean[5] || clean.slice(5).join(' ') || ''
+                                    });
+                                }
+                            }
+
+                            if (newEntries.length > 0) {
+                                window.dataEntries = newEntries;
+                            }
+                        }
+                    }
+                    window.renderTable();
+                    event.target.value = '';
+                } catch (err) {
+                    console.error('Import Error:', err);
+                }
+            };
+            reader.readAsText(file);
+        };
+
+        // Render Immediately
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => window.renderTable());
+        } else {
+            window.renderTable();
+        }
+    </script>
+</body>
+</html>
